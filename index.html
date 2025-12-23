@@ -32,19 +32,27 @@
             z-index: 20;
         }
 
-        #mobile-controls button {
-            font-size: 22px;
-            padding: 14px;
+        #mobile-controls button,
+        #shootBtn {
+            font-size: 28px;
+            padding: 18px;
             margin: 5px;
             opacity: 0.7;
             border-radius: 8px;
+        }
+
+        #shootBtn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 20;
         }
     </style>
 </head>
 
 <body>
 
-    <div id="hint">Click to lock mouse • WASD to move</div>
+    <div id="hint">Click to lock mouse • WASD to move • E to shoot</div>
 
     <div id="mobile-controls">
         <button id="up">▲</button><br>
@@ -52,6 +60,8 @@
         <button id="down">▼</button>
         <button id="right">▶</button>
     </div>
+
+    <button id="shootBtn">Shoot</button>
 
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
@@ -68,10 +78,7 @@
         scene.background = new THREE.Color(0x87ceeb);
 
         const camera = new THREE.PerspectiveCamera(
-            75,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            1000
+            75, window.innerWidth / window.innerHeight, 0.1, 1000
         );
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -91,7 +98,7 @@
            WORLD
         ===================== */
         const ground = new THREE.Mesh(
-            new THREE.PlaneGeometry(200, 200),
+            new THREE.PlaneGeometry(300, 300),
             new THREE.MeshStandardMaterial({ color: 0x3a9d23, side: THREE.DoubleSide })
         );
         ground.rotation.x = -Math.PI / 2;
@@ -106,15 +113,13 @@
             scene.add(m);
         }
 
-        wall(8, 5, -10, 10, 10, 1);
-        wall(-8, 5, -10, 10, 10, 1);
+        wall(20, 5, -10, 30, 20, 1);
+        wall(-20, 5, -10, 30, 20, 1);
+        wall(35, 5, -60, 1, 20, 100);
+        wall(-35, 5, -60, 1, 20, 100);
+        wall(0, 5, -109, 70, 20, 1);
+        wall(28.5, 5, -25, 15, 20, 1);
 
-        const sphere = new THREE.Mesh(
-            new THREE.SphereGeometry(1, 32, 32),
-            new THREE.MeshStandardMaterial({ color: 0xff0000 })
-        );
-        sphere.position.set(0, 1, -5);
-        scene.add(sphere);
 
         /* =====================
            PLAYER
@@ -148,22 +153,6 @@
             });
         }
 
-        // Mobile touch look
-        let lastX = 0, lastY = 0;
-        document.addEventListener("touchstart", e => {
-            lastX = e.touches[0].clientX;
-            lastY = e.touches[0].clientY;
-        });
-
-        document.addEventListener("touchmove", e => {
-            const t = e.touches[0];
-            player.yaw -= (t.clientX - lastX) * 0.005;
-            player.pitch -= (t.clientY - lastY) * 0.005;
-            player.pitch = Math.max(-1.5, Math.min(1.5, player.pitch));
-            lastX = t.clientX;
-            lastY = t.clientY;
-        });
-
         /* =====================
            MOBILE BUTTONS
         ===================== */
@@ -171,6 +160,21 @@
             document.getElementById("mobile-controls").style.display = "block";
             document.getElementById("hint").innerText =
                 "Drag to look • Buttons to move";
+
+            // show optional gyro enable button for devices that support DeviceOrientation
+            if (window.DeviceOrientationEvent) {
+                const g = document.createElement('button');
+                g.id = 'gyro';
+                g.textContent = 'Enable gyro';
+                g.style.position = 'fixed';
+                g.style.bottom = '20px';
+                g.style.right = '20px';
+                g.style.zIndex = '30';
+                g.style.padding = '10px 12px';
+                g.style.borderRadius = '8px';
+                document.body.appendChild(g);
+                g.addEventListener('click', enableGyro);
+            }
         }
 
         function bind(id, key) {
@@ -183,6 +187,120 @@
         bind("down", "s");
         bind("left", "a");
         bind("right", "d");
+
+        /* =====================
+           TOUCH LOOK (mobile)
+           use non-passive listener so we can call preventDefault()
+        ===================== */
+        let lastX = 0, lastY = 0;
+        document.addEventListener("touchstart", e => {
+            // don't let the browser interpret this touch as a scroll/gesture
+            if (e.touches && e.touches[0]) {
+                lastX = e.touches[0].clientX;
+                lastY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        document.addEventListener("touchmove", e => {
+            // prevent page scrolling while dragging to look
+            e.preventDefault();
+            const t = e.touches[0];
+            player.yaw -= (t.clientX - lastX) * 0.005;
+            player.pitch -= (t.clientY - lastY) * 0.005;
+            player.pitch = Math.max(-1.5, Math.min(1.5, player.pitch));
+            lastX = t.clientX;
+            lastY = t.clientY;
+        }, { passive: false });
+
+        /* =====================
+           OPTIONAL DEVICE ORIENTATION (GYRO) FOR MOBILE
+           - Requests permission on iOS (if required)
+           - Maps device orientation to camera yaw/pitch
+        ===================== */
+        let usingGyro = false;
+
+        function enableGyro() {
+            // iOS 13+ requires permission prompt
+            const button = document.getElementById('gyro');
+            if (typeof DeviceOrientationEvent !== 'undefined' &&
+                typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            window.addEventListener('deviceorientation', onDeviceOrientation, true);
+                            usingGyro = true;
+                            if (button) button.style.display = 'none';
+                        }
+                    })
+                    .catch(() => {
+                        // permission denied or error
+                        if (button) button.textContent = 'Gyro unavailable';
+                        setTimeout(() => { if (button) button.style.display = 'none'; }, 2000);
+                    });
+            } else {
+                // non-iOS or older browsers
+                window.addEventListener('deviceorientation', onDeviceOrientation, true);
+                usingGyro = true;
+                if (button) button.style.display = 'none';
+            }
+        }
+
+        function onDeviceOrientation(e) {
+            // alpha = rotation around z (0..360) - use for yaw
+            // beta  = rotation around x (-180..180) - use for pitch approximation
+            const alpha = e.alpha || 0;
+            const beta = e.beta || 0;
+
+            // convert to radians and map to camera controls
+            // yaw: negate alpha so device rotation maps to world yaw
+            player.yaw = -THREE.Math.degToRad(alpha);
+
+            // pitch: map beta (device front/back tilt) to camera pitch range
+            // center beta near 90deg (device held vertically) by subtracting 90deg
+            const pitchRad = THREE.Math.degToRad(beta) - (Math.PI / 2);
+            player.pitch = Math.max(-1.5, Math.min(1.5, pitchRad));
+        }
+
+        /* =====================
+           SHOOTING (FIXED)
+        ===================== */
+        const bullets = [];
+        let canShoot = true;
+        const fireRate = 200;
+
+        function shoot() {
+            if (!canShoot) return;
+            canShoot = false;
+
+            const bullet = new THREE.Mesh(
+                new THREE.SphereGeometry(0.2, 16, 16),
+                new THREE.MeshStandardMaterial({ color: 0xffff00 })
+            );
+
+            // Spawn at camera (eye)
+            bullet.position.copy(camera.position);
+
+            // Get EXACT look direction
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+
+            bullet.velocity = direction.multiplyScalar(0.8);
+
+            bullets.push(bullet);
+            scene.add(bullet);
+
+            setTimeout(() => canShoot = true, fireRate);
+        }
+
+        // E key shooting
+        window.addEventListener("keydown", e => {
+            if (e.key.toLowerCase() === "e") shoot();
+        });
+
+        // Button shooting
+        const shootBtn = document.getElementById("shootBtn");
+        shootBtn.addEventListener("click", shoot);
+        shootBtn.addEventListener("touchstart", shoot);
 
         /* =====================
            GAME LOOP
@@ -204,6 +322,8 @@
             if (keys.a) player.position.addScaledVector(right, -speed);
             if (keys.d) player.position.addScaledVector(right, speed);
 
+            bullets.forEach(b => b.position.add(b.velocity));
+
             camera.rotation.order = "YXZ";
             camera.rotation.y = player.yaw;
             camera.rotation.x = player.pitch;
@@ -211,7 +331,6 @@
 
             renderer.render(scene, camera);
         }
-
         animate();
 
         /* =====================
