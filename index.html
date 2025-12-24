@@ -47,6 +47,33 @@
             right: 20px;
             z-index: 20;
         }
+
+        /* Joystick styles */
+        #joystick-base {
+            position: fixed;
+            left: 24px;
+            bottom: 100px;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            display: none;
+            /* shown on mobile */
+            align-items: center;
+            justify-content: center;
+            z-index: 25;
+            touch-action: none;
+        }
+
+        #joystick-knob {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.16);
+            transform: translate(0, 0);
+            transition: transform 0.08s linear;
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -61,6 +88,9 @@
         <button id="right">▶</button>
     </div>
 
+    <!-- Virtual joystick for mobile movement -->
+    <div id="joystick-base"><div id="joystick-knob"></div></div>
+
     <button id="shootBtn">Shoot</button>
 
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
@@ -70,6 +100,17 @@
            DEVICE DETECTION
         ===================== */
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        // Joystick state (used on mobile)
+        const joystick = {
+            x: 0, // left/right (-1..1)
+            y: 0, // forward/back (-1..1)
+            active: false
+        };
+
+        // Initialize joystick element references
+        const joystickBase = document.getElementById('joystick-base');
+        const joystickKnob = document.getElementById('joystick-knob');
 
         /* =====================
            BASIC SETUP
@@ -175,6 +216,9 @@
                 document.body.appendChild(g);
                 g.addEventListener('click', enableGyro);
             }
+
+            // show joystick on mobile
+            if (joystickBase) joystickBase.style.display = 'flex';
         }
 
         function bind(id, key) {
@@ -214,6 +258,77 @@
         bind("down", "s");
         bind("left", "a");
         bind("right", "d");
+
+        /* =====================
+           JOYSTICK (pointer/touch) handling
+        ===================== */
+        if (joystickBase) {
+            const rect = () => joystickBase.getBoundingClientRect();
+            const maxRadius = 44; // knob movement radius in px
+
+            function setKnob(dx, dy) {
+                joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+            }
+
+            function resetKnob() {
+                joystick.x = 0; joystick.y = 0; joystick.active = false;
+                joystickKnob.style.transition = 'transform 0.12s ease-out';
+                setKnob(0, 0);
+                setTimeout(() => joystickKnob.style.transition = '', 150);
+            }
+
+            function updateFromPointer(clientX, clientY) {
+                const r = rect();
+                const cx = r.left + r.width/2;
+                const cy = r.top + r.height/2;
+                let dx = clientX - cx;
+                let dy = clientY - cy;
+                // invert dy so forward is up on knob
+                dy = Math.max(-maxRadius, Math.min(maxRadius, dy));
+                dx = Math.max(-maxRadius, Math.min(maxRadius, dx));
+
+                const nx = dx / maxRadius; // -1..1 (left..right)
+                const ny = -dy / maxRadius; // -1..1 (forward..back)
+
+                joystick.x = nx;
+                joystick.y = ny;
+                joystick.active = true;
+                setKnob(dx, dy);
+            }
+
+            // pointer events (work in Safari iPadOS)
+            joystickBase.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                joystickBase.setPointerCapture(e.pointerId);
+                updateFromPointer(e.clientX, e.clientY);
+            });
+
+            joystickBase.addEventListener('pointermove', (e) => {
+                if (!joystick.active) return;
+                e.preventDefault();
+                updateFromPointer(e.clientX, e.clientY);
+            });
+
+            joystickBase.addEventListener('pointerup', (e) => {
+                e.preventDefault();
+                joystickBase.releasePointerCapture?.(e.pointerId);
+                resetKnob();
+            });
+
+            // touch fallback (in case pointer events are not present)
+            joystickBase.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const t = e.touches[0];
+                updateFromPointer(t.clientX, t.clientY);
+            }, { passive: false });
+            joystickBase.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const t = e.touches[0];
+                updateFromPointer(t.clientX, t.clientY);
+            }, { passive: false });
+            joystickBase.addEventListener('touchend', (e) => { e.preventDefault(); resetKnob(); });
+            joystickBase.addEventListener('touchcancel', (e) => { e.preventDefault(); resetKnob(); });
+        }
 
         /* =====================
            TOUCH LOOK (mobile)
@@ -344,10 +459,17 @@
                 Math.cos(player.yaw), 0, -Math.sin(player.yaw)
             );
 
+            // keyboard/buttons
             if (keys.w) player.position.addScaledVector(forward, -speed);
             if (keys.s) player.position.addScaledVector(forward, speed);
             if (keys.a) player.position.addScaledVector(right, -speed);
             if (keys.d) player.position.addScaledVector(right, speed);
+
+            // joystick (mobile) - joystick.y forward/back, joystick.x left/right
+            if (joystick.active && (Math.abs(joystick.x) > 0.05 || Math.abs(joystick.y) > 0.05)) {
+                player.position.addScaledVector(forward, joystick.y * speed);
+                player.position.addScaledVector(right, joystick.x * speed);
+            }
 
             bullets.forEach(b => b.position.add(b.velocity));
 
