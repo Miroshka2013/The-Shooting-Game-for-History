@@ -179,8 +179,35 @@
 
         function bind(id, key) {
             const b = document.getElementById(id);
-            b.addEventListener("touchstart", () => keys[key] = true);
-            b.addEventListener("touchend", () => keys[key] = false);
+            if (!b) return;
+
+            const down = (e) => {
+                if (e && typeof e.preventDefault === 'function') e.preventDefault();
+                keys[key] = true;
+            };
+
+            const up = (e) => {
+                if (e && typeof e.preventDefault === 'function') e.preventDefault();
+                keys[key] = false;
+            };
+
+            // Pointer events (preferred)
+            b.addEventListener('pointerdown', down);
+            b.addEventListener('pointerup', up);
+            b.addEventListener('pointercancel', up);
+
+            // Touch fallback
+            b.addEventListener('touchstart', down, { passive: false });
+            b.addEventListener('touchend', up);
+            b.addEventListener('touchcancel', up);
+
+            // Mouse fallback
+            b.addEventListener('mousedown', down);
+            b.addEventListener('mouseup', up);
+            b.addEventListener('mouseleave', up);
+
+            // Prevent default click behaviour which can steal focus/trigger navigation
+            b.addEventListener('click', (e) => { e.preventDefault(); });
         }
 
         bind("up", "w");
