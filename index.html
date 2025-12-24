@@ -56,7 +56,8 @@
             width: 140px;
             height: 140px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
             display: none;
             /* shown on mobile */
             align-items: center;
@@ -69,7 +70,8 @@
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.7);
             transform: translate(0, 0);
             transition: transform 0.08s linear;
             pointer-events: none;
@@ -89,7 +91,9 @@
     </div>
 
     <!-- Virtual joystick for mobile movement -->
-    <div id="joystick-base"><div id="joystick-knob"></div></div>
+    <div id="joystick-base">
+        <div id="joystick-knob"></div>
+    </div>
 
     <button id="shootBtn">Shoot</button>
 
@@ -279,8 +283,8 @@
 
             function updateFromPointer(clientX, clientY) {
                 const r = rect();
-                const cx = r.left + r.width/2;
-                const cy = r.top + r.height/2;
+                const cx = r.left + r.width / 2;
+                const cy = r.top + r.height / 2;
                 let dx = clientX - cx;
                 let dy = clientY - cy;
                 // invert dy so forward is up on knob
