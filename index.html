@@ -52,17 +52,17 @@
         #joystick-base {
             position: fixed;
             left: 24px;
-            bottom: 100px;
+            bottom: 260px;
             width: 140px;
             height: 140px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.25);
+            border: 3px solid rgba(255, 255, 255, 0.5);
             display: none;
             /* shown on mobile */
             align-items: center;
             justify-content: center;
-            z-index: 25;
+            z-index: 100;
             touch-action: none;
         }
 
@@ -70,8 +70,8 @@
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.5);
-            border: 2px solid rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.6);
+            border: 3px solid rgba(255, 255, 255, 0.9);
             transform: translate(0, 0);
             transition: transform 0.08s linear;
             pointer-events: none;
@@ -204,7 +204,7 @@
         if (isMobile) {
             document.getElementById("mobile-controls").style.display = "block";
             document.getElementById("hint").innerText =
-                "Drag to look • Buttons to move";
+                "Drag to look • Use joystick to move";
 
             // show optional gyro enable button for devices that support DeviceOrientation
             if (window.DeviceOrientationEvent) {
@@ -213,7 +213,7 @@
                 g.textContent = 'Enable gyro';
                 g.style.position = 'fixed';
                 g.style.bottom = '20px';
-                g.style.right = '20px';
+                g.style.right = '120px';
                 g.style.zIndex = '30';
                 g.style.padding = '10px 12px';
                 g.style.borderRadius = '8px';
@@ -221,8 +221,15 @@
                 g.addEventListener('click', enableGyro);
             }
 
-            // show joystick on mobile
-            if (joystickBase) joystickBase.style.display = 'flex';
+            // show joystick on mobile - force display
+            if (joystickBase) {
+                joystickBase.style.display = 'flex';
+                console.log('Joystick enabled on mobile device');
+            } else {
+                console.error('Joystick base element not found!');
+            }
+        } else {
+            console.log('Not mobile, joystick hidden');
         }
 
         function bind(id, key) {
