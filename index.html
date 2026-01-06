@@ -474,6 +474,42 @@
             }
         });
 
+        /* CAMERA ROTATION FOR MOBILE */
+        let lastTouchX = 0;
+        let lastTouchY = 0;
+        let touchRotating = false;
+
+        renderer.domElement.addEventListener("touchstart", e => {
+            if (e.touches.length === 1) {
+                // Single finger touch for camera rotation
+                lastTouchX = e.touches[0].clientX;
+                lastTouchY = e.touches[0].clientY;
+                touchRotating = true;
+            }
+        });
+
+        renderer.domElement.addEventListener("touchmove", e => {
+            if (touchRotating && e.touches.length === 1) {
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - lastTouchX;
+                const deltaY = touch.clientY - lastTouchY;
+
+                // Update camera rotation (yaw and pitch)
+                player.yaw -= deltaX * 0.005;
+                player.pitch -= deltaY * 0.005;
+                player.pitch = Math.max(-1.5, Math.min(1.5, player.pitch));
+
+                lastTouchX = touch.clientX;
+                lastTouchY = touch.clientY;
+            }
+        });
+
+        renderer.domElement.addEventListener("touchend", e => {
+            if (e.touches.length === 0) {
+                touchRotating = false;
+            }
+        });
+
         /* JOYSTICK */
         let joyStart = { x: 0, y: 0 }, joyActive = false;
         const maxDistance = 50; // Maximum joystick movement
