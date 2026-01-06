@@ -53,23 +53,25 @@
             position: fixed;
             left: 20px;
             bottom: 20px;
-            width: 160px;
-            height: 160px;
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
-            background: rgba(100, 100, 100, 0.5);
-            border: 4px solid rgba(255, 255, 255, 0.8);
+            background: rgba(255, 0, 0, 0.6);
+            border: 5px solid rgba(255, 255, 0, 0.9);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 100;
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
         }
 
         #joystick-knob {
-            width: 70px;
-            height: 70px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            background: rgba(200, 200, 200, 0.9);
-            border: 3px solid rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 0, 0.95);
+            border: 4px solid rgba(255, 255, 255, 1);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
         }
     </style>
 </head>
@@ -420,6 +422,18 @@
         if (isMobile) {
             mobileControls.style.display = "block";
             joystickBase.style.display = "flex";
+            
+            // Force visibility debugging
+            console.log("Mobile detected!");
+            console.log("Joystick element:", joystickBase);
+            console.log("Joystick display:", getComputedStyle(joystickBase).display);
+            
+            // Ensure visibility
+            setTimeout(() => {
+                joystickBase.style.display = "flex";
+                joystickBase.style.visibility = "visible";
+                console.log("Joystick forced visible");
+            }, 100);
         }
 
         function bindBtn(id, key) {
@@ -435,7 +449,7 @@
         /* JOYSTICK */
         let joyStart = { x: 0, y: 0 }, joyActive = false;
         const maxDistance = 50; // Maximum joystick movement
-        
+
         joystickBase.addEventListener("touchstart", e => {
             e.preventDefault();
             joyActive = true;
@@ -443,14 +457,14 @@
             joyStart.x = rect.left + rect.width / 2;
             joyStart.y = rect.top + rect.height / 2;
         });
-        
+
         joystickBase.addEventListener("touchmove", e => {
             e.preventDefault();
             if (!joyActive) return;
-            
+
             let dx = e.touches[0].clientX - joyStart.x;
             let dy = e.touches[0].clientY - joyStart.y;
-            
+
             // Limit movement
             const distance = Math.sqrt(dx * dx + dy * dy);
             if (distance > maxDistance) {
@@ -458,16 +472,16 @@
                 dx = Math.cos(angle) * maxDistance;
                 dy = Math.sin(angle) * maxDistance;
             }
-            
+
             joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-            
+
             // Update movement keys based on joystick position
             keys.w = dy < -15;
             keys.s = dy > 15;
             keys.a = dx < -15;
             keys.d = dx > 15;
         });
-        
+
         joystickBase.addEventListener("touchend", e => {
             e.preventDefault();
             joyActive = false;
