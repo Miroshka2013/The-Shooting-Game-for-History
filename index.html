@@ -24,6 +24,7 @@
             z-index: 10;
         }
 
+        /* MOBILE CONTROLS */
         #mobile-controls {
             position: fixed;
             bottom: 20px;
@@ -32,11 +33,10 @@
             z-index: 20;
         }
 
-        #mobile-controls button,
-        #shootBtn {
-            font-size: 28px;
+        #mobile-controls button {
+            font-size: 26px;
             padding: 18px;
-            margin: 5px;
+            margin: 4px;
             opacity: 0.7;
             border-radius: 8px;
         }
@@ -45,25 +45,23 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
+            font-size: 24px;
             z-index: 20;
         }
 
-        /* Joystick styles */
         #joystick-base {
             position: fixed;
-            left: 24px;
-            bottom: 260px;
+            left: 20px;
+            bottom: 200px;
             width: 140px;
             height: 140px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.25);
             border: 3px solid rgba(255, 255, 255, 0.5);
             display: none;
-            /* shown on mobile */
             align-items: center;
             justify-content: center;
-            z-index: 100;
-            touch-action: none;
+            z-index: 20;
         }
 
         #joystick-knob {
@@ -71,17 +69,13 @@
             height: 56px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.6);
-            border: 3px solid rgba(255, 255, 255, 0.9);
-            transform: translate(0, 0);
-            transition: transform 0.08s linear;
-            pointer-events: none;
         }
     </style>
 </head>
 
 <body>
 
-    <div id="hint">Click to lock mouse • WASD to move • E to shoot</div>
+    <div id="hint">Click to lock mouse • WASD to move • Space to jump • E to shoot</div>
 
     <div id="mobile-controls">
         <button id="up">▲</button><br>
@@ -90,7 +84,6 @@
         <button id="right">▶</button>
     </div>
 
-    <!-- Virtual joystick for mobile movement -->
     <div id="joystick-base">
         <div id="joystick-knob"></div>
     </div>
@@ -101,47 +94,31 @@
 
     <script>
         /* =====================
-           DEVICE DETECTION
+           SETUP
         ===================== */
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-        // Joystick state (used on mobile)
-        const joystick = {
-            x: 0, // left/right (-1..1)
-            y: 0, // forward/back (-1..1)
-            active: false
-        };
-
-        // Initialize joystick element references
-        const joystickBase = document.getElementById('joystick-base');
-        const joystickKnob = document.getElementById('joystick-knob');
-
-        /* =====================
-           BASIC SETUP
-        ===================== */
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87ceeb);
 
-        const camera = new THREE.PerspectiveCamera(
-            75, window.innerWidth / window.innerHeight, 0.1, 1000
-        );
-
+        const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(innerWidth, innerHeight);
         document.body.appendChild(renderer.domElement);
 
         /* =====================
            LIGHTING
         ===================== */
         scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-
         const sun = new THREE.DirectionalLight(0xffffff, 1);
         sun.position.set(5, 10, 5);
         scene.add(sun);
 
         /* =====================
-           WORLD
+           WORLD + COLLIDERS
         ===================== */
+        const colliders = [];
+
         const ground = new THREE.Mesh(
             new THREE.PlaneGeometry(300, 300),
             new THREE.MeshStandardMaterial({ color: 0x3a9d23, side: THREE.DoubleSide })
@@ -156,15 +133,76 @@
             );
             m.position.set(x, y, z);
             scene.add(m);
+            colliders.push(m);
         }
 
-        wall(20, 5, -10, 30, 20, 1);
-        wall(-20, 5, -10, 30, 20, 1);
-        wall(35, 5, -60, 1, 20, 100);
-        wall(-35, 5, -60, 1, 20, 100);
-        wall(0, 5, -109, 70, 20, 1);
-        wall(28.5, 5, -25, 15, 20, 1);
+        function grass(x, y, z, w, h, d) {
+            const m = new THREE.Mesh(
+                new THREE.BoxGeometry(w, h, d),
+                new THREE.MeshStandardMaterial({ color: 0x3a9d23 })
+            );
+            m.position.set(x, y, z);
+            scene.add(m);
+            colliders.push(m);
+        }
 
+        /* WALLS */
+        wall(20, 20, -10, 30, 20, 1);
+        wall(-20, 20, -10, 30, 20, 1);
+        wall(35, 20, -60, 1, 20, 100);
+        wall(-35, 20, -60, 1, 20, 100);
+        wall(0, 20, -109, 70, 20, 1);
+
+        wall(28.5, 20, -25, 15, 30, 1);
+        wall(-28.5, 20, -25, 15, 30, 1);
+        wall(-35, 20, -17.5, 1, 30, 15);
+        wall(35, 20, -17.5, 1, 30, 15);
+        wall(-22, 20, -21.5, 1, 30, 7.5);
+        wall(22, 20, -21.5, 1, 30, 7.5);
+        wall(28.5, 20, -10, 15, 30, 1);
+        wall(-28.5, 20, -10, 15, 30, 1);
+
+        wall(-28.5, 20, -50, 15, 30, 1);
+        wall(28.5, 20, -50, 15, 30, 1);
+        wall(-35, 20, -57.5, 1, 30, 15);
+        wall(35, 20, -57.5, 1, 30, 15);
+        wall(-22, 20, -61, 1, 30, 7.5);
+        wall(22, 20, -61, 1, 30, 7.5);
+        wall(-28.5, 20, -65, 15, 30, 1);
+        wall(28.5, 20, -65, 15, 30, 1);
+
+        wall(-28.5, 20, -94, 15, 30, 1);
+        wall(28.5, 20, -94, 15, 30, 1);
+        wall(-35, 20, -101.5, 1, 30, 15);
+        wall(35, 20, -101.5, 1, 30, 15);
+        wall(-22, 20, -105, 1, 30, 7.5);
+        wall(22, 20, -105, 1, 30, 7.5);
+        wall(-28.5, 20, -109, 15, 30, 1);
+        wall(28.5, 20, -109, 15, 30, 1);
+
+        // stairs
+        function stairs(x, y, z, steps, stepHeight, stepDepth, stepWidth) {
+            for (let i = 0; i < steps; i++) {
+                wall(x, y + i * stepHeight, z, stepWidth, stepHeight, stepDepth);
+            }
+        }
+
+        stairs(-60, 0, -30, 10, 1, 5, 20);
+        stairs(60, 0, -80, 10, 2, 5);
+        stairs(-60, 0, -80, 10, 2, 5, 20);
+        stairs(60, 0, -30, 10, 2, 5);
+
+        /* ---- GRASS ---- */
+
+        grass(0, 5, 0, 15, 100, 100)
+        grass(-120, 0, -50, 50, 5, 30);
+        grass(70, 0, -50, 50, 5, 30);
+        grass(100, 0, -80, 50, 5, 40);
+        grass(100, 0, -20, 50, 5, 40);
+        grass(70, 0, 0, 50, 5, 40);
+        grass(100, 0, 80, 50, 5, 40);
+        grass(120, 0, 120, 50, 5, 40);
+        grass(100, 0, -120, 50, 5, 40);
 
         /* =====================
            PLAYER
@@ -174,312 +212,146 @@
             yaw: 0,
             pitch: 0
         };
-
         camera.position.copy(player.position);
+
+        const playerSize = new THREE.Vector3(0.8, 1.8, 0.8);
+
+        /* Jump */
+        let velocityY = 0;
+        const gravity = -0.015;
+        const jumpStrength = 0.3;
+        const groundY = 1.6;
+        let onGround = true;
 
         /* =====================
            INPUT
         ===================== */
         const keys = {};
-        window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-        window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-        // Desktop mouse look
+        addEventListener("keydown", e => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.code === "Space" && onGround) {
+                velocityY = jumpStrength;
+                onGround = false;
+            }
+        });
+        addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
         if (!isMobile) {
-            document.body.addEventListener("click", () => {
-                document.body.requestPointerLock();
-            });
-
-            document.addEventListener("mousemove", e => {
-                if (document.pointerLockElement !== document.body) return;
-                player.yaw -= e.movementX * 0.002;
-                player.pitch -= e.movementY * 0.002;
-                player.pitch = Math.max(-1.5, Math.min(1.5, player.pitch));
-            });
+            document.body.onclick = () => document.body.requestPointerLock();
         }
 
-        /* =====================
-           MOBILE BUTTONS
-        ===================== */
-        if (isMobile) {
-            document.getElementById("mobile-controls").style.display = "block";
-            document.getElementById("hint").innerText =
-                "Drag to look • Use joystick to move";
-
-            // show optional gyro enable button for devices that support DeviceOrientation
-            if (window.DeviceOrientationEvent) {
-                const g = document.createElement('button');
-                g.id = 'gyro';
-                g.textContent = 'Enable gyro';
-                g.style.position = 'fixed';
-                g.style.bottom = '20px';
-                g.style.right = '120px';
-                g.style.zIndex = '30';
-                g.style.padding = '10px 12px';
-                g.style.borderRadius = '8px';
-                document.body.appendChild(g);
-                g.addEventListener('click', enableGyro);
-            }
-
-            // show joystick on mobile - force display
-            if (joystickBase) {
-                joystickBase.style.display = 'flex';
-                console.log('Joystick enabled on mobile device');
-            } else {
-                console.error('Joystick base element not found!');
-            }
-        } else {
-            console.log('Not mobile, joystick hidden');
-        }
-
-        function bind(id, key) {
-            const b = document.getElementById(id);
-            if (!b) return;
-
-            const down = (e) => {
-                if (e && typeof e.preventDefault === 'function') e.preventDefault();
-                keys[key] = true;
-            };
-
-            const up = (e) => {
-                if (e && typeof e.preventDefault === 'function') e.preventDefault();
-                keys[key] = false;
-            };
-
-            // Pointer events (preferred)
-            b.addEventListener('pointerdown', down);
-            b.addEventListener('pointerup', up);
-            b.addEventListener('pointercancel', up);
-
-            // Touch fallback
-            b.addEventListener('touchstart', down, { passive: false });
-            b.addEventListener('touchend', up);
-            b.addEventListener('touchcancel', up);
-
-            // Mouse fallback
-            b.addEventListener('mousedown', down);
-            b.addEventListener('mouseup', up);
-            b.addEventListener('mouseleave', up);
-
-            // Prevent default click behaviour which can steal focus/trigger navigation
-            b.addEventListener('click', (e) => { e.preventDefault(); });
-        }
-
-        bind("up", "w");
-        bind("down", "s");
-        bind("left", "a");
-        bind("right", "d");
-
-        /* =====================
-           JOYSTICK (pointer/touch) handling
-        ===================== */
-        if (joystickBase) {
-            const rect = () => joystickBase.getBoundingClientRect();
-            const maxRadius = 44; // knob movement radius in px
-
-            function setKnob(dx, dy) {
-                joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-            }
-
-            function resetKnob() {
-                joystick.x = 0; joystick.y = 0; joystick.active = false;
-                joystickKnob.style.transition = 'transform 0.12s ease-out';
-                setKnob(0, 0);
-                setTimeout(() => joystickKnob.style.transition = '', 150);
-            }
-
-            function updateFromPointer(clientX, clientY) {
-                const r = rect();
-                const cx = r.left + r.width / 2;
-                const cy = r.top + r.height / 2;
-                let dx = clientX - cx;
-                let dy = clientY - cy;
-                // invert dy so forward is up on knob
-                dy = Math.max(-maxRadius, Math.min(maxRadius, dy));
-                dx = Math.max(-maxRadius, Math.min(maxRadius, dx));
-
-                const nx = dx / maxRadius; // -1..1 (left..right)
-                const ny = -dy / maxRadius; // -1..1 (forward..back)
-
-                joystick.x = nx;
-                joystick.y = ny;
-                joystick.active = true;
-                setKnob(dx, dy);
-            }
-
-            // pointer events (work in Safari iPadOS)
-            joystickBase.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                joystickBase.setPointerCapture(e.pointerId);
-                updateFromPointer(e.clientX, e.clientY);
-            });
-
-            joystickBase.addEventListener('pointermove', (e) => {
-                if (!joystick.active) return;
-                e.preventDefault();
-                updateFromPointer(e.clientX, e.clientY);
-            });
-
-            joystickBase.addEventListener('pointerup', (e) => {
-                e.preventDefault();
-                joystickBase.releasePointerCapture?.(e.pointerId);
-                resetKnob();
-            });
-
-            // touch fallback (in case pointer events are not present)
-            joystickBase.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const t = e.touches[0];
-                updateFromPointer(t.clientX, t.clientY);
-            }, { passive: false });
-            joystickBase.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                const t = e.touches[0];
-                updateFromPointer(t.clientX, t.clientY);
-            }, { passive: false });
-            joystickBase.addEventListener('touchend', (e) => { e.preventDefault(); resetKnob(); });
-            joystickBase.addEventListener('touchcancel', (e) => { e.preventDefault(); resetKnob(); });
-        }
-
-        /* =====================
-           TOUCH LOOK (mobile)
-           use non-passive listener so we can call preventDefault()
-        ===================== */
-        let lastX = 0, lastY = 0;
-        document.addEventListener("touchstart", e => {
-            // don't let the browser interpret this touch as a scroll/gesture
-            if (e.touches && e.touches[0]) {
-                lastX = e.touches[0].clientX;
-                lastY = e.touches[0].clientY;
-            }
-        }, { passive: true });
-
-        document.addEventListener("touchmove", e => {
-            // prevent page scrolling while dragging to look
-            e.preventDefault();
-            const t = e.touches[0];
-            player.yaw -= (t.clientX - lastX) * 0.005;
-            player.pitch -= (t.clientY - lastY) * 0.005;
+        document.addEventListener("mousemove", e => {
+            if (document.pointerLockElement !== document.body) return;
+            player.yaw -= e.movementX * 0.002;
+            player.pitch -= e.movementY * 0.002;
             player.pitch = Math.max(-1.5, Math.min(1.5, player.pitch));
-            lastX = t.clientX;
-            lastY = t.clientY;
-        }, { passive: false });
+        });
 
         /* =====================
-           OPTIONAL DEVICE ORIENTATION (GYRO) FOR MOBILE
-           - Requests permission on iOS (if required)
-           - Maps device orientation to camera yaw/pitch
+           MOBILE CONTROLS
         ===================== */
-        let usingGyro = false;
+        const mobileControls = document.getElementById("mobile-controls");
+        const joystickBase = document.getElementById("joystick-base");
+        const joystickKnob = document.getElementById("joystick-knob");
 
-        function enableGyro() {
-            // iOS 13+ requires permission prompt
-            const button = document.getElementById('gyro');
-            if (typeof DeviceOrientationEvent !== 'undefined' &&
-                typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then(response => {
-                        if (response === 'granted') {
-                            window.addEventListener('deviceorientation', onDeviceOrientation, true);
-                            usingGyro = true;
-                            if (button) button.style.display = 'none';
-                        }
-                    })
-                    .catch(() => {
-                        // permission denied or error
-                        if (button) button.textContent = 'Gyro unavailable';
-                        setTimeout(() => { if (button) button.style.display = 'none'; }, 2000);
-                    });
-            } else {
-                // non-iOS or older browsers
-                window.addEventListener('deviceorientation', onDeviceOrientation, true);
-                usingGyro = true;
-                if (button) button.style.display = 'none';
-            }
+        if (isMobile) {
+            mobileControls.style.display = "block";
+            joystickBase.style.display = "flex";
         }
 
-        function onDeviceOrientation(e) {
-            // alpha = rotation around z (0..360) - use for yaw
-            // beta  = rotation around x (-180..180) - use for pitch approximation
-            const alpha = e.alpha || 0;
-            const beta = e.beta || 0;
-
-            // convert to radians and map to camera controls
-            // yaw: negate alpha so device rotation maps to world yaw
-            player.yaw = -THREE.Math.degToRad(alpha);
-
-            // pitch: map beta (device front/back tilt) to camera pitch range
-            // center beta near 90deg (device held vertically) by subtracting 90deg
-            const pitchRad = THREE.Math.degToRad(beta) - (Math.PI / 2);
-            player.pitch = Math.max(-1.5, Math.min(1.5, pitchRad));
+        function bindBtn(id, key) {
+            const b = document.getElementById(id);
+            b.addEventListener("touchstart", e => { e.preventDefault(); keys[key] = true; });
+            b.addEventListener("touchend", e => { e.preventDefault(); keys[key] = false; });
         }
+        bindBtn("up", "w");
+        bindBtn("down", "s");
+        bindBtn("left", "a");
+        bindBtn("right", "d");
+
+        /* JOYSTICK */
+        let joyStart = { x: 0, y: 0 }, joyActive = false;
+        joystickBase.addEventListener("touchstart", e => {
+            joyActive = true;
+            joyStart.x = e.touches[0].clientX;
+            joyStart.y = e.touches[0].clientY;
+        });
+        joystickBase.addEventListener("touchmove", e => {
+            if (!joyActive) return;
+            let dx = e.touches[0].clientX - joyStart.x;
+            let dy = e.touches[0].clientY - joyStart.y;
+            dx = Math.max(-40, Math.min(40, dx));
+            dy = Math.max(-40, Math.min(40, dy));
+            joystickKnob.style.transform = `translate(${dx}px,${dy}px)`;
+            keys.w = dy < -10; keys.s = dy > 10; keys.a = dx < -10; keys.d = dx > 10;
+        });
+        joystickBase.addEventListener("touchend", () => {
+            joyActive = false;
+            joystickKnob.style.transform = "translate(0,0)";
+            keys.w = keys.a = keys.s = keys.d = false;
+        });
 
         /* =====================
-           SHOOTING (FIXED)
+           SHOOTING
         ===================== */
         const bullets = [];
         let canShoot = true;
-        const fireRate = 200;
 
         function shoot() {
             if (!canShoot) return;
             canShoot = false;
-
-            const bullet = new THREE.Mesh(
+            const b = new THREE.Mesh(
                 new THREE.SphereGeometry(0.2, 16, 16),
                 new THREE.MeshStandardMaterial({ color: 0xffff00 })
             );
-
-            // Spawn at camera (eye)
-            bullet.position.copy(camera.position);
-
-            // Get EXACT look direction
-            const direction = new THREE.Vector3();
-            camera.getWorldDirection(direction);
-
-            bullet.velocity = direction.multiplyScalar(0.8);
-
-            bullets.push(bullet);
-            scene.add(bullet);
-
-            setTimeout(() => canShoot = true, fireRate);
+            b.position.copy(camera.position);
+            const dir = new THREE.Vector3();
+            camera.getWorldDirection(dir);
+            b.velocity = dir.multiplyScalar(0.8);
+            bullets.push(b);
+            scene.add(b);
+            setTimeout(() => canShoot = true, 200);
         }
 
-        // E key shooting
-        window.addEventListener("keydown", e => {
-            if (e.key.toLowerCase() === "e") shoot();
-        });
+        shootBtn.onclick = shoot;
+        shootBtn.addEventListener("touchstart", e => { e.preventDefault(); shoot(); });
+        addEventListener("keydown", e => e.key === "e" && shoot());
 
-        // Button shooting
-        const shootBtn = document.getElementById("shootBtn");
-        shootBtn.addEventListener("click", shoot);
-        shootBtn.addEventListener("touchstart", shoot);
+        /* =====================
+           COLLISION
+        ===================== */
+        function collides(pos) {
+            const pBox = new THREE.Box3().setFromCenterAndSize(
+                new THREE.Vector3(pos.x, pos.y + 0.8, pos.z),
+                playerSize
+            );
+            return colliders.some(o => pBox.intersectsBox(new THREE.Box3().setFromObject(o)));
+        }
 
         /* =====================
            GAME LOOP
         ===================== */
         const speed = 0.15;
-
         function animate() {
             requestAnimationFrame(animate);
 
-            const forward = new THREE.Vector3(
-                Math.sin(player.yaw), 0, Math.cos(player.yaw)
-            );
-            const right = new THREE.Vector3(
-                Math.cos(player.yaw), 0, -Math.sin(player.yaw)
-            );
+            const forward = new THREE.Vector3(Math.sin(player.yaw), 0, Math.cos(player.yaw));
+            const right = new THREE.Vector3(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
 
-            // keyboard/buttons
-            if (keys.w) player.position.addScaledVector(forward, -speed);
-            if (keys.s) player.position.addScaledVector(forward, speed);
-            if (keys.a) player.position.addScaledVector(right, -speed);
-            if (keys.d) player.position.addScaledVector(right, speed);
+            let next = player.position.clone();
+            if (keys.w) next.addScaledVector(forward, -speed);
+            if (keys.s) next.addScaledVector(forward, speed);
+            if (keys.a) next.addScaledVector(right, -speed);
+            if (keys.d) next.addScaledVector(right, speed);
+            if (!collides(next)) player.position.copy(next);
 
-            // joystick (mobile) - joystick.y forward/back, joystick.x left/right
-            if (joystick.active && (Math.abs(joystick.x) > 0.05 || Math.abs(joystick.y) > 0.05)) {
-                player.position.addScaledVector(forward, joystick.y * speed);
-                player.position.addScaledVector(right, joystick.x * speed);
+            velocityY += gravity;
+            player.position.y += velocityY;
+            if (player.position.y <= groundY) {
+                player.position.y = groundY;
+                velocityY = 0;
+                onGround = true;
             }
 
             bullets.forEach(b => b.position.add(b.velocity));
@@ -493,16 +365,12 @@
         }
         animate();
 
-        /* =====================
-           RESIZE
-        ===================== */
-        window.addEventListener("resize", () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
+        addEventListener("resize", () => {
+            camera.aspect = innerWidth / innerHeight;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(innerWidth, innerHeight);
         });
     </script>
-
 </body>
 
 </html>
