@@ -208,24 +208,24 @@
            RIVER
         ===================== */
         const river = new THREE.Mesh(
-            new THREE.PlaneGeometry(30, 150),
+            new THREE.PlaneGeometry(40, 100),
             new THREE.MeshStandardMaterial({ 
-                color: 0x4a90e2,
+                color: 0x1e90ff,
                 transparent: true,
-                opacity: 0.7,
+                opacity: 0.6,
                 side: THREE.DoubleSide
             })
         );
         river.rotation.x = -Math.PI / 2;
-        river.position.set(-80, 0.2, -40);
+        river.position.set(0, 0.1, -60);
         scene.add(river);
 
-        const waterLevel = 0.2;
+        const waterLevel = 0.1;
         const riverBounds = {
-            minX: -95,
-            maxX: -65,
-            minZ: -115,
-            maxZ: 35
+            minX: -20,
+            maxX: 20,
+            minZ: -110,
+            maxZ: -10
         };
 
         function isInWater(pos) {
