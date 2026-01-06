@@ -75,7 +75,7 @@
 
 <body>
 
-    <div id="hint">Click to lock mouse • WASD to move • Space to jump • E to shoot</div>
+    <div id="hint">Click to lock mouse • WASD to move • Space to jump • E to shoot • ⚠️ MOAT = DEATH</div>
 
     <div id="mobile-controls">
         <button id="up">▲</button><br>
@@ -204,6 +204,166 @@
         grass(100, 0, -120, 50, 5, 40);
 
         /* =====================
+           MOAT (ring around castle walls)
+        ===================== */
+        // Moat water - ring shape (outside castle only)
+        const waterMaterial = new THREE.MeshStandardMaterial({
+            color: 0x0047ab, // Darker blue for moat
+            transparent: true,
+            opacity: 0.7,
+            side: THREE.DoubleSide
+        });
+
+        // Create 4 moat sections around the castle
+        // North moat (behind castle)
+        const northMoat = new THREE.Mesh(new THREE.PlaneGeometry(100, 20), waterMaterial);
+        northMoat.rotation.x = -Math.PI / 2;
+        northMoat.position.set(0, 0.05, -120);
+        scene.add(northMoat);
+
+        // South moat (in front of castle)
+        const southMoat = new THREE.Mesh(new THREE.PlaneGeometry(100, 20), waterMaterial);
+        southMoat.rotation.x = -Math.PI / 2;
+        southMoat.position.set(0, 0.05, 10);
+        scene.add(southMoat);
+
+        // West moat (left side)
+        const westMoat = new THREE.Mesh(new THREE.PlaneGeometry(20, 140), waterMaterial);
+        westMoat.rotation.x = -Math.PI / 2;
+        westMoat.position.set(-45, 0.05, -55);
+        scene.add(westMoat);
+
+        // East moat (right side)
+        const eastMoat = new THREE.Mesh(new THREE.PlaneGeometry(20, 140), waterMaterial);
+        eastMoat.rotation.x = -Math.PI / 2;
+        eastMoat.position.set(45, 0.05, -55);
+        scene.add(eastMoat);
+
+        /* =====================
+           BRIDGE & GATE (castle entrance)
+        ===================== */
+        // Drawbridge over south moat
+        const bridgeMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 }); // Brown wood
+        const bridge = new THREE.Mesh(
+            new THREE.BoxGeometry(12, 0.5, 22),
+            bridgeMaterial
+        );
+        bridge.position.set(0, 0.3, 10);
+        scene.add(bridge);
+
+        // Bridge supports
+        const support1 = new THREE.Mesh(new THREE.BoxGeometry(1, 4, 1), bridgeMaterial);
+        support1.position.set(-5, -1.5, 10);
+        scene.add(support1);
+        const support2 = new THREE.Mesh(new THREE.BoxGeometry(1, 4, 1), bridgeMaterial);
+        support2.position.set(5, -1.5, 10);
+        scene.add(support2);
+
+        // Gate (portcullis style)
+        const gateMaterial = new THREE.MeshStandardMaterial({ color: 0x2c2c2c }); // Dark gray
+        const stoneMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 }); // Stone gray
+
+        // Gate towers (left and right)
+        const towerLeft = new THREE.Mesh(
+            new THREE.BoxGeometry(4, 12, 4),
+            stoneMaterial
+        );
+        towerLeft.position.set(-6, 6, -1);
+        scene.add(towerLeft);
+
+        const towerRight = new THREE.Mesh(
+            new THREE.BoxGeometry(4, 12, 4),
+            stoneMaterial
+        );
+        towerRight.position.set(6, 6, -1);
+        scene.add(towerRight);
+
+        // Gate arch
+        const archTop = new THREE.Mesh(
+            new THREE.BoxGeometry(12, 2, 2),
+            stoneMaterial
+        );
+        archTop.position.set(0, 10, -1);
+        scene.add(archTop);
+
+        // Wooden gate doors
+        const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x5D4037 }); // Dark wood
+        const gateLeftDoor = new THREE.Mesh(
+            new THREE.BoxGeometry(4, 7, 0.5),
+            woodMaterial
+        );
+        gateLeftDoor.position.set(-2, 3.5, 0);
+        scene.add(gateLeftDoor);
+
+        const gateRightDoor = new THREE.Mesh(
+            new THREE.BoxGeometry(4, 7, 0.5),
+            woodMaterial
+        );
+        gateRightDoor.position.set(2, 3.5, 0);
+        scene.add(gateRightDoor);
+
+        // Gate state for animation
+        let gateOpen = false;
+        let gateOpenProgress = 0; // 0 = closed, 1 = fully open
+        const gateSpeed = 0.03;
+
+        // Metal reinforcements on doors
+        const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x3c3c3c });
+        for (let i = 0; i < 3; i++) {
+            // Left door reinforcements
+            const metalLeft = new THREE.Mesh(
+                new THREE.BoxGeometry(4.2, 0.3, 0.3),
+                metalMaterial
+            );
+            metalLeft.position.set(-2, 1.5 + i * 2, 0.3);
+            scene.add(metalLeft);
+
+            // Right door reinforcements
+            const metalRight = new THREE.Mesh(
+                new THREE.BoxGeometry(4.2, 0.3, 0.3),
+                metalMaterial
+            );
+            metalRight.position.set(2, 1.5 + i * 2, 0.3);
+            scene.add(metalRight);
+        }
+
+        // Tower battlements (crenellations)
+        for (let side = -1; side <= 1; side += 2) {
+            for (let i = 0; i < 3; i++) {
+                const battlement = new THREE.Mesh(
+                    new THREE.BoxGeometry(1, 1.5, 1),
+                    stoneMaterial
+                );
+                battlement.position.set(side * 6 + (i - 1) * 1.2, 12.5, -1);
+                scene.add(battlement);
+            }
+        }
+
+        // Moat bounds - only the outer ring (excluding bridge area)
+        function isInMoat(x, y, z) {
+            // Check if player is at water level or below
+            if (y > 1.6) return false;
+
+            // Bridge safe zone (no drowning on bridge)
+            if (z >= 0 && z <= 21 && x >= -6 && x <= 6) return false;
+
+            // North moat
+            if (z >= -130 && z <= -110 && x >= -50 && x <= 50) return true;
+            // South moat (with bridge gap)
+            if (z >= 0 && z <= 20 && x >= -50 && x <= 50) return true;
+            // West moat
+            if (x >= -55 && x <= -35 && z >= -125 && z <= 15) return true;
+            // East moat
+            if (x >= 35 && x <= 55 && z >= -125 && z <= 15) return true;
+
+            return false;
+        }
+
+        // Drowning mechanic
+        let timeInWater = 0;
+        const drownTime = 3000; // 3 seconds to drown
+
+        /* =====================
            PLAYER
         ===================== */
         const player = {
@@ -215,12 +375,14 @@
 
         const playerSize = new THREE.Vector3(0.8, 1.8, 0.8);
 
-        /* Jump */
+        /* Jump & Swimming */
         let velocityY = 0;
         const gravity = -0.015;
         const jumpStrength = 0.3;
         const groundY = 1.6;
         let onGround = true;
+        let isInWater = false;
+        let isDrowning = false;
 
         /* =====================
            INPUT
@@ -335,21 +497,91 @@
         function animate() {
             requestAnimationFrame(animate);
 
+            // Check distance to gate and open/close
+            const distanceToGate = Math.sqrt(
+                Math.pow(player.position.x - 0, 2) +
+                Math.pow(player.position.z - 0, 2)
+            );
+
+            if (distanceToGate < 15) {
+                gateOpen = true;
+            } else {
+                gateOpen = false;
+            }
+
+            // Animate gate opening/closing
+            if (gateOpen && gateOpenProgress < 1) {
+                gateOpenProgress += gateSpeed;
+                if (gateOpenProgress > 1) gateOpenProgress = 1;
+            } else if (!gateOpen && gateOpenProgress > 0) {
+                gateOpenProgress -= gateSpeed;
+                if (gateOpenProgress < 0) gateOpenProgress = 0;
+            }
+
+            // Update gate door positions
+            gateLeftDoor.position.x = -2 - (gateOpenProgress * 3);
+            gateRightDoor.position.x = 2 + (gateOpenProgress * 3);
+
+            // Check if player is in moat
+            isInWater = isInMoat(player.position.x, player.position.y, player.position.z);
+
+            // Drowning mechanic
+            if (isInWater) {
+                timeInWater += 16.67; // ~60fps = ~16.67ms per frame
+                if (timeInWater >= drownTime) {
+                    isDrowning = true;
+                    // Sink player down
+                    velocityY = -0.05;
+                }
+            } else {
+                timeInWater = 0;
+                isDrowning = false;
+            }
+
             const forward = new THREE.Vector3(Math.sin(player.yaw), 0, Math.cos(player.yaw));
             const right = new THREE.Vector3(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
 
             let next = player.position.clone();
-            if (keys.w) next.addScaledVector(forward, -speed);
-            if (keys.s) next.addScaledVector(forward, speed);
-            if (keys.a) next.addScaledVector(right, -speed);
-            if (keys.d) next.addScaledVector(right, speed);
+            const moveSpeed = isDrowning ? 0 : (isInWater ? speed * 0.4 : speed);
+            if (keys.w) next.addScaledVector(forward, -moveSpeed);
+            if (keys.s) next.addScaledVector(forward, moveSpeed);
+            if (keys.a) next.addScaledVector(right, -moveSpeed);
+            if (keys.d) next.addScaledVector(right, moveSpeed);
             if (!collides(next)) player.position.copy(next);
 
-            velocityY += gravity;
+            // Moat physics
+            if (isInWater && !isDrowning) {
+                // Struggle to stay afloat - pull player down slowly
+                velocityY -= 0.01; // Sink gradually
+                velocityY *= 0.9; // Water resistance
+            } else if (!isInWater) {
+                velocityY += gravity;
+            }
+
             player.position.y += velocityY;
-            if (player.position.y <= groundY) {
+
+            if (player.position.y <= groundY && !isInWater) {
                 player.position.y = groundY;
                 velocityY = 0;
+                onGround = true;
+            } else {
+                onGround = false;
+            }
+
+            // Keep player at moat water level when in water (struggling)
+            if (isInWater && !isDrowning && player.position.y < 0.5) {
+                player.position.y = 0.5;
+                velocityY = 0;
+            }
+
+            // Drown - sink to bottom and reset
+            if (isDrowning && player.position.y < -3) {
+                // Reset player to spawn
+                player.position.set(0, 1.6, 5);
+                velocityY = 0;
+                timeInWater = 0;
+                isDrowning = false;
+                isInWater = false;
                 onGround = true;
             }
 
