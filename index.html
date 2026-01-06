@@ -25,22 +25,6 @@
         }
 
         /* MOBILE CONTROLS */
-        #mobile-controls {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            display: none;
-            z-index: 20;
-        }
-
-        #mobile-controls button {
-            font-size: 26px;
-            padding: 18px;
-            margin: 4px;
-            opacity: 0.7;
-            border-radius: 8px;
-        }
-
         #shootBtn {
             position: fixed;
             bottom: 20px;
@@ -80,13 +64,6 @@
 
     <div id="hint">Click to lock mouse • WASD to move • Space to jump • E to shoot • ⚠️ MOAT = DEATH</div>
 
-    <div id="mobile-controls">
-        <button id="up">▲</button><br>
-        <button id="left">◀</button>
-        <button id="down">▼</button>
-        <button id="right">▶</button>
-    </div>
-
     <div id="joystick-base">
         <div id="joystick-knob"></div>
     </div>
@@ -103,14 +80,14 @@
 
     <script type="module">
         import * as THREE from 'three';
-        
+
         /* =====================
            SETUP
         ===================== */
         // Better mobile detection
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-                        (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
-        
+            (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+
         console.log("User Agent:", navigator.userAgent);
         console.log("Is Mobile:", isMobile);
         console.log("Max Touch Points:", navigator.maxTouchPoints);
@@ -429,19 +406,17 @@
         /* =====================
            MOBILE CONTROLS
         ===================== */
-        const mobileControls = document.getElementById("mobile-controls");
         const joystickBase = document.getElementById("joystick-base");
         const joystickKnob = document.getElementById("joystick-knob");
 
         if (isMobile) {
-            mobileControls.style.display = "block";
             joystickBase.style.display = "flex";
-            
+
             // Force visibility debugging
             console.log("Mobile detected!");
             console.log("Joystick element:", joystickBase);
             console.log("Joystick display:", getComputedStyle(joystickBase).display);
-            
+
             // Ensure visibility
             setTimeout(() => {
                 joystickBase.style.display = "flex";
@@ -449,16 +424,6 @@
                 console.log("Joystick forced visible");
             }, 100);
         }
-
-        function bindBtn(id, key) {
-            const b = document.getElementById(id);
-            b.addEventListener("touchstart", e => { e.preventDefault(); keys[key] = true; });
-            b.addEventListener("touchend", e => { e.preventDefault(); keys[key] = false; });
-        }
-        bindBtn("up", "w");
-        bindBtn("down", "s");
-        bindBtn("left", "a");
-        bindBtn("right", "d");
 
         /* JOYSTICK */
         let joyStart = { x: 0, y: 0 }, joyActive = false;
