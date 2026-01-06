@@ -75,7 +75,7 @@
 
 <body>
 
-    <div id="hint">Click to lock mouse • WASD to move • Space to jump/swim up • Q to dive • E to shoot</div>
+    <div id="hint">Click to lock mouse • WASD to move • Space to jump • E to shoot</div>
 
     <div id="mobile-controls">
         <button id="up">▲</button><br>
@@ -147,38 +147,38 @@
         }
 
         /* WALLS */
-        wall(20, 20, -10, 30, 20, 1);
-        wall(-20, 20, -10, 30, 20, 1);
-        wall(35, 20, -60, 1, 20, 100);
-        wall(-35, 20, -60, 1, 20, 100);
-        wall(0, 20, -109, 70, 20, 1);
+        wall(20, 5, -10, 30, 20, 1);
+        wall(-20, 5, -10, 30, 20, 1);
+        wall(35, 5, -60, 1, 20, 100);
+        wall(-35, 5, -60, 1, 20, 100);
+        wall(0, 5, -109, 70, 20, 1);
 
-        wall(28.5, 20, -25, 15, 30, 1);
-        wall(-28.5, 20, -25, 15, 30, 1);
-        wall(-35, 20, -17.5, 1, 30, 15);
-        wall(35, 20, -17.5, 1, 30, 15);
-        wall(-22, 20, -21.5, 1, 30, 7.5);
-        wall(22, 20, -21.5, 1, 30, 7.5);
-        wall(28.5, 20, -10, 15, 30, 1);
-        wall(-28.5, 20, -10, 15, 30, 1);
+        wall(28.5, 5, -25, 15, 30, 1);
+        wall(-28.5, 5, -25, 15, 30, 1);
+        wall(-35, 5, -17.5, 1, 30, 15);
+        wall(35, 5, -17.5, 1, 30, 15);
+        wall(-22, 5, -21.5, 1, 30, 7.5);
+        wall(22, 5, -21.5, 1, 30, 7.5);
+        wall(28.5, 5, -10, 15, 30, 1);
+        wall(-28.5, 5, -10, 15, 30, 1);
 
-        wall(-28.5, 20, -50, 15, 30, 1);
-        wall(28.5, 20, -50, 15, 30, 1);
-        wall(-35, 20, -57.5, 1, 30, 15);
-        wall(35, 20, -57.5, 1, 30, 15);
-        wall(-22, 20, -61, 1, 30, 7.5);
-        wall(22, 20, -61, 1, 30, 7.5);
-        wall(-28.5, 20, -65, 15, 30, 1);
-        wall(28.5, 20, -65, 15, 30, 1);
+        wall(-28.5, 5, -50, 15, 30, 1);
+        wall(28.5, 5, -50, 15, 30, 1);
+        wall(-35, 5, -57.5, 1, 30, 15);
+        wall(35, 5, -57.5, 1, 30, 15);
+        wall(-22, 5, -61, 1, 30, 7.5);
+        wall(22, 5, -61, 1, 30, 7.5);
+        wall(-28.5, 5, -65, 15, 30, 1);
+        wall(28.5, 5, -65, 15, 30, 1);
 
-        wall(-28.5, 20, -94, 15, 30, 1);
-        wall(28.5, 20, -94, 15, 30, 1);
-        wall(-35, 20, -101.5, 1, 30, 15);
-        wall(35, 20, -101.5, 1, 30, 15);
-        wall(-22, 20, -105, 1, 30, 7.5);
-        wall(22, 20, -105, 1, 30, 7.5);
-        wall(-28.5, 20, -109, 15, 30, 1);
-        wall(28.5, 20, -109, 15, 30, 1);
+        wall(-28.5, 5, -94, 15, 30, 1);
+        wall(28.5, 5, -94, 15, 30, 1);
+        wall(-35, 5, -101.5, 1, 30, 15);
+        wall(35, 5, -101.5, 1, 30, 15);
+        wall(-22, 5, -105, 1, 30, 7.5);
+        wall(22, 5, -105, 1, 30, 7.5);
+        wall(-28.5, 5, -109, 15, 30, 1);
+        wall(28.5, 5, -109, 15, 30, 1);
 
         // stairs
         function stairs(x, y, z, steps, stepHeight, stepDepth, stepWidth) {
@@ -194,7 +194,6 @@
 
         /* ---- GRASS ---- */
 
-        grass(0, 5, 0, 15, 100, 100)
         grass(-120, 0, -50, 50, 5, 30);
         grass(70, 0, -50, 50, 5, 30);
         grass(100, 0, -80, 50, 5, 40);
@@ -203,38 +202,6 @@
         grass(100, 0, 80, 50, 5, 40);
         grass(120, 0, 120, 50, 5, 40);
         grass(100, 0, -120, 50, 5, 40);
-
-        /* =====================
-           RIVER
-        ===================== */
-        const river = new THREE.Mesh(
-            new THREE.PlaneGeometry(40, 100),
-            new THREE.MeshStandardMaterial({ 
-                color: 0x1e90ff,
-                transparent: true,
-                opacity: 0.6,
-                side: THREE.DoubleSide
-            })
-        );
-        river.rotation.x = -Math.PI / 2;
-        river.position.set(0, 0.1, -60);
-        scene.add(river);
-
-        const waterLevel = 0.1;
-        const riverBounds = {
-            minX: -20,
-            maxX: 20,
-            minZ: -110,
-            maxZ: -10
-        };
-
-        function isInWater(pos) {
-            return pos.x > riverBounds.minX && 
-                   pos.x < riverBounds.maxX && 
-                   pos.z > riverBounds.minZ && 
-                   pos.z < riverBounds.maxZ &&
-                   pos.y <= waterLevel + 1.6;
-        }
 
         /* =====================
            PLAYER
@@ -248,14 +215,12 @@
 
         const playerSize = new THREE.Vector3(0.8, 1.8, 0.8);
 
-        /* Jump & Swimming */
+        /* Jump */
         let velocityY = 0;
         const gravity = -0.015;
         const jumpStrength = 0.3;
         const groundY = 1.6;
         let onGround = true;
-        let inWater = false;
-        let isDiving = false;
 
         /* =====================
            INPUT
@@ -268,20 +233,8 @@
                 velocityY = jumpStrength;
                 onGround = false;
             }
-            // Dive/swim up controls
-            if (e.key.toLowerCase() === 'q' && inWater) {
-                isDiving = true; // Q to dive down
-            }
-            if (e.code === "Space" && inWater) {
-                velocityY = 0.15; // Space to swim up
-            }
         });
-        addEventListener("keyup", e => {
-            keys[e.key.toLowerCase()] = false;
-            if (e.key.toLowerCase() === 'q') {
-                isDiving = false;
-            }
-        });
+        addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
         if (!isMobile) {
             document.body.onclick = () => document.body.requestPointerLock();
@@ -385,9 +338,6 @@
             const forward = new THREE.Vector3(Math.sin(player.yaw), 0, Math.cos(player.yaw));
             const right = new THREE.Vector3(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
 
-            // Check if player is in water
-            inWater = isInWater(player.position);
-
             let next = player.position.clone();
             if (keys.w) next.addScaledVector(forward, -speed);
             if (keys.s) next.addScaledVector(forward, speed);
@@ -395,39 +345,12 @@
             if (keys.d) next.addScaledVector(right, speed);
             if (!collides(next)) player.position.copy(next);
 
-            // Physics - different behavior in water vs air
-            if (inWater) {
-                // Swimming physics
-                velocityY *= 0.8; // Water resistance
-                if (isDiving) {
-                    velocityY = -0.1; // Dive down when Q pressed
-                }
-                // Buoyancy - slow float up if not diving
-                if (!isDiving && !keys[' ']) {
-                    velocityY += 0.005;
-                }
-                player.position.y += velocityY;
-                
-                // Clamp to water surface (can't go above water when swimming)
-                if (player.position.y > waterLevel + 1.6) {
-                    player.position.y = waterLevel + 1.6;
-                    velocityY = 0;
-                }
-                // Water floor
-                if (player.position.y < waterLevel - 5) {
-                    player.position.y = waterLevel - 5;
-                    velocityY = 0;
-                }
-                onGround = false;
-            } else {
-                // Normal gravity/jumping
-                velocityY += gravity;
-                player.position.y += velocityY;
-                if (player.position.y <= groundY) {
-                    player.position.y = groundY;
-                    velocityY = 0;
-                    onGround = true;
-                }
+            velocityY += gravity;
+            player.position.y += velocityY;
+            if (player.position.y <= groundY) {
+                player.position.y = groundY;
+                velocityY = 0;
+                onGround = true;
             }
 
             bullets.forEach(b => b.position.add(b.velocity));
