@@ -33,6 +33,20 @@
             z-index: 20;
         }
 
+        #jumpBtn {
+            position: fixed;
+            bottom: 120px;
+            right: 20px;
+            font-size: 24px;
+            padding: 20px 30px;
+            z-index: 20;
+            background: rgba(100, 200, 100, 0.7);
+            border: 2px solid white;
+            border-radius: 8px;
+            color: white;
+            display: none;
+        }
+
         #joystick-base {
             position: fixed;
             left: 20px;
@@ -68,6 +82,7 @@
         <div id="joystick-knob"></div>
     </div>
 
+    <button id="jumpBtn">Jump</button>
     <button id="shootBtn">Shoot</button>
 
     <script type="importmap">
@@ -408,9 +423,11 @@
         ===================== */
         const joystickBase = document.getElementById("joystick-base");
         const joystickKnob = document.getElementById("joystick-knob");
+        const jumpBtn = document.getElementById("jumpBtn");
 
         if (isMobile) {
             joystickBase.style.display = "flex";
+            jumpBtn.style.display = "block";
 
             // Force visibility debugging
             console.log("Mobile detected!");
@@ -421,9 +438,19 @@
             setTimeout(() => {
                 joystickBase.style.display = "flex";
                 joystickBase.style.visibility = "visible";
+                jumpBtn.style.display = "block";
                 console.log("Joystick forced visible");
             }, 100);
         }
+
+        // Jump button for mobile
+        jumpBtn.addEventListener("touchstart", e => {
+            e.preventDefault();
+            if (onGround) {
+                velocityY = jumpStrength;
+                onGround = false;
+            }
+        });
 
         /* JOYSTICK */
         let joyStart = { x: 0, y: 0 }, joyActive = false;
