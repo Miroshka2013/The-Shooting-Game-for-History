@@ -759,6 +759,19 @@
             return colliders.some(o => pBox.intersectsBox(new THREE.Box3().setFromObject(o)));
         }
 
+        // Check if we can step up (for automatic stair climbing)
+        function canStepUp(pos, maxStepHeight = 1.2) {
+            // Check if there's a step we can climb at this position
+            for (let stepUp = 0.1; stepUp <= maxStepHeight; stepUp += 0.1) {
+                const testPos = pos.clone();
+                testPos.y += stepUp;
+                if (!collides(testPos)) {
+                    return stepUp;
+                }
+            }
+            return 0;
+        }
+
         /* =====================
            GAME LOOP
         ===================== */
@@ -816,7 +829,20 @@
             if (keys.s) next.addScaledVector(forward, moveSpeed);
             if (keys.a) next.addScaledVector(right, -moveSpeed);
             if (keys.d) next.addScaledVector(right, moveSpeed);
-            if (!collides(next)) player.position.copy(next);
+            
+            // Check for collision and auto-step-up
+            if (collides(next)) {
+                // Try to step up automatically
+                const stepHeight = canStepUp(next);
+                if (stepHeight > 0 && onGround) {
+                    next.y += stepHeight;
+                    if (!collides(next)) {
+                        player.position.copy(next);
+                    }
+                }
+            } else {
+                player.position.copy(next);
+            }
 
             // Moat physics - player falls into moat
             if (isOverMoat(player.position.x, player.position.z)) {
