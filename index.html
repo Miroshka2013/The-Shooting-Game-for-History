@@ -381,8 +381,8 @@
             }
         }
 
-        // Spiral stairs around the main tower
-        squareTowerSteps(0, 0, -90, 55, 1, 6);
+        // Spiral stairs around the main tower - smaller steps for easier climbing
+        squareTowerSteps(0, 0.5, -90, 55, 0.5, 6);
 
 
         /* =====================
@@ -760,22 +760,15 @@
         }
 
         // Check if we can step up (for automatic stair climbing)
-        function canStepUp(pos, maxStepHeight = 1.2) {
-            // Check if there's solid ground at this elevated position
-            for (let stepUp = 0.2; stepUp <= maxStepHeight; stepUp += 0.2) {
+        function canStepUp(pos, maxStepHeight = 0.7) {
+            // Try different step heights
+            for (let stepUp = 0.1; stepUp <= maxStepHeight; stepUp += 0.1) {
                 const testPos = pos.clone();
                 testPos.y += stepUp;
-                
-                // Check if this position is free (no collision)
+
+                // If this elevated position is free, we can step up
                 if (!collides(testPos)) {
-                    // Also verify there's actually a step below us at this position
-                    const checkBelow = testPos.clone();
-                    checkBelow.y -= 0.1;
-                    
-                    // If there's a collider just below, we found our step
-                    if (collides(checkBelow)) {
-                        return stepUp;
-                    }
+                    return stepUp;
                 }
             }
             return 0;
