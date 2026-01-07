@@ -353,30 +353,36 @@
         grass(100, 0, -120, 50, 5, 40);
 
         /* ---- STAIRS ---- */
-        // Simple straight stairs that work
-        function createStairs(startX, startY, startZ, direction, numSteps) {
-            const stepWidth = 10;
-            const stepHeight = 0.5;
+        // Spiral stairs inside the main tower
+        function createSpiralStairs(centerX, centerZ, startY, endY, radius, stepsPerLoop) {
+            const totalHeight = endY - startY;
+            const stepHeight = 0.3;
+            const totalSteps = Math.floor(totalHeight / stepHeight);
+            const angleStep = (Math.PI * 2) / stepsPerLoop;
+            const stepWidth = 3;
             const stepDepth = 2;
 
-            for (let i = 0; i < numSteps; i++) {
-                let x = startX;
-                let y = startY + (i * stepHeight);
-                let z = startZ;
-
-                // Adjust position based on direction
-                if (direction === 'north') z -= i * stepDepth;
-                else if (direction === 'south') z += i * stepDepth;
-                else if (direction === 'east') x += i * stepDepth;
-                else if (direction === 'west') x -= i * stepDepth;
+            for (let i = 0; i < totalSteps; i++) {
+                const angle = i * angleStep;
+                const x = centerX + Math.cos(angle) * radius;
+                const z = centerZ + Math.sin(angle) * radius;
+                const y = startY + (i * stepHeight);
 
                 // Create the step
-                wall(x, y, z, stepWidth, stepHeight, stepDepth);
+                const m = new THREE.Mesh(
+                    new THREE.BoxGeometry(stepWidth, stepHeight, stepDepth),
+                    new THREE.MeshStandardMaterial({ color: 0x8B4513 }) // Brown wood stairs
+                );
+                m.position.set(x, y + stepHeight / 2, z);
+                m.rotation.y = angle + Math.PI / 2; // Rotate to face center
+                scene.add(m);
+                colliders.push(m);
             }
         }
 
-        // Create stairs leading up to the main tower
-        createStairs(0, 0.5, -75, 'north', 20);  // 20 steps going north toward tower
+        // Create spiral stairs inside the main tower
+        // Tower center is at (0, y, -90), radius is about 6 units (inside the 20x20 tower)
+        createSpiralStairs(0, -90, 0, 50, 6, 20); // 20 steps per complete loop
 
         /* =====================
            MOAT (ring around castle walls)
@@ -830,14 +836,21 @@
                 // No collision, move freely
                 player.position.copy(next);
             } else if (onGround) {
-                // Hit something, try to step up
-                const stepHeight = canStepUp(next);
-                if (stepHeight > 0) {
-                    // Can step up, do it smoothly
-                    next.y += stepHeight;
-                    player.position.copy(next);
+                // Hit something while on ground, try to step up
+                let stepped = false;
+                // Try stepping up in small increments (max 0.6 units for small stairs)
+                for (let stepUp = 0.05; stepUp <= 0.6; stepUp += 0.05) {
+                    const testPos = next.clone();
+                    testPos.y = player.position.y + stepUp;
+
+                    if (!collides(testPos)) {
+                        // Found a height where we can move forward
+                        player.position.copy(testPos);
+                        stepped = true;
+                        break;
+                    }
                 }
-                // If can't step up, just don't move (blocked)
+                // If can't step up, don't move (blocked by wall)
             }
 
             // Moat physics - player falls into moat
@@ -860,10 +873,24 @@
             // Update isInWater check after position update
             isInWater = isInMoat(player.position.x, player.position.y, player.position.z);
 
-            if (player.position.y <= groundY && !isOverMoat(player.position.x, player.position.z)) {
-                player.position.y = groundY;
-                velocityY = 0;
+            // Check if player is on ground OR standing on a collider (like stairs)
+            const testBelow = player.position.clone();
+            testBelow.y -= 0.1; // Check slightly below
+
+            const isOnCollider = collides(testBelow);
+            const isOnGround = player.position.y <= groundY && !isOverMoat(player.position.x, player.position.z);
+
+            if (isOnCollider || isOnGround) {
+                // Player is standing on something - stop falling
+                if (velocityY < 0) {
+                    velocityY = 0;
+                }
                 onGround = true;
+
+                // If we're falling into ground, snap to ground level
+                if (isOnGround && player.position.y < groundY) {
+                    player.position.y = groundY;
+                }
             } else {
                 onGround = false;
             }
