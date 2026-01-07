@@ -372,7 +372,7 @@
 
                 step.position.set(
                     x + side.x * stepSize,
-                    y + i * stepHeight,
+                    y + i * stepHeight + stepHeight / 2, // Center the step vertically
                     z + side.z * stepSize
                 );
 
@@ -381,8 +381,8 @@
             }
         }
 
-        // Spiral stairs around the main tower - smaller steps for easier climbing
-        squareTowerSteps(0, 0.5, -90, 55, 0.5, 6);
+        // Spiral stairs around the main tower - proper stairs
+        squareTowerSteps(0, 0, -90, 60, 1, 6);
 
 
         /* =====================
@@ -760,7 +760,7 @@
         }
 
         // Check if we can step up (for automatic stair climbing)
-        function canStepUp(pos, maxStepHeight = 0.7) {
+        function canStepUp(pos, maxStepHeight = 1.2) {
             // Try different step heights
             for (let stepUp = 0.1; stepUp <= maxStepHeight; stepUp += 0.1) {
                 const testPos = pos.clone();
