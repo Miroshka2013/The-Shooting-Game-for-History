@@ -761,12 +761,21 @@
 
         // Check if we can step up (for automatic stair climbing)
         function canStepUp(pos, maxStepHeight = 1.2) {
-            // Check if there's a step we can climb at this position
-            for (let stepUp = 0.1; stepUp <= maxStepHeight; stepUp += 0.1) {
+            // Check if there's solid ground at this elevated position
+            for (let stepUp = 0.2; stepUp <= maxStepHeight; stepUp += 0.2) {
                 const testPos = pos.clone();
                 testPos.y += stepUp;
+                
+                // Check if this position is free (no collision)
                 if (!collides(testPos)) {
-                    return stepUp;
+                    // Also verify there's actually a step below us at this position
+                    const checkBelow = testPos.clone();
+                    checkBelow.y -= 0.1;
+                    
+                    // If there's a collider just below, we found our step
+                    if (collides(checkBelow)) {
+                        return stepUp;
+                    }
                 }
             }
             return 0;
@@ -829,19 +838,20 @@
             if (keys.s) next.addScaledVector(forward, moveSpeed);
             if (keys.a) next.addScaledVector(right, -moveSpeed);
             if (keys.d) next.addScaledVector(right, moveSpeed);
-            
-            // Check for collision and auto-step-up
-            if (collides(next)) {
-                // Try to step up automatically
-                const stepHeight = canStepUp(next);
-                if (stepHeight > 0 && onGround) {
-                    next.y += stepHeight;
-                    if (!collides(next)) {
-                        player.position.copy(next);
-                    }
-                }
-            } else {
+
+            // Movement with automatic step climbing
+            if (!collides(next)) {
+                // No collision, move freely
                 player.position.copy(next);
+            } else if (onGround) {
+                // Hit something, try to step up
+                const stepHeight = canStepUp(next);
+                if (stepHeight > 0) {
+                    // Can step up, do it smoothly
+                    next.y += stepHeight;
+                    player.position.copy(next);
+                }
+                // If can't step up, just don't move (blocked)
             }
 
             // Moat physics - player falls into moat
