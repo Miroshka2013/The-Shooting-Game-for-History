@@ -377,11 +377,12 @@
                 );
 
                 scene.add(step);
-                colliders.push(step);
+                // DON'T add to colliders - let player walk through stairs
+                // colliders.push(step);
             }
         }
 
-        // Spiral stairs around the main tower - proper stairs
+        // Spiral stairs around the main tower - visual only, no collision
         squareTowerSteps(0, 0, -90, 60, 1, 6);
 
 
