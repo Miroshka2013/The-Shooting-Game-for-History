@@ -352,59 +352,31 @@
         grass(120, 0, 120, 50, 5, 40);
         grass(100, 0, -120, 50, 5, 40);
 
-        function squareTowerSteps(x, y, z, steps, stepHeight, stepSize) {
-            const material = new THREE.MeshStandardMaterial({ color: 0x666666 });
+        /* ---- STAIRS ---- */
+        // Simple straight stairs that work
+        function createStairs(startX, startY, startZ, direction, numSteps) {
+            const stepWidth = 10;
+            const stepHeight = 0.5;
+            const stepDepth = 2;
 
-            const offsets = [
-                { x: 1, z: 0 },
-                { x: 0, z: 1 },
-                { x: -1, z: 0 },
-                { x: 0, z: -1 }
-            ];
+            for (let i = 0; i < numSteps; i++) {
+                let x = startX;
+                let y = startY + (i * stepHeight);
+                let z = startZ;
 
-            for (let i = 0; i < steps; i++) {
-                const side = offsets[i % 4];
+                // Adjust position based on direction
+                if (direction === 'north') z -= i * stepDepth;
+                else if (direction === 'south') z += i * stepDepth;
+                else if (direction === 'east') x += i * stepDepth;
+                else if (direction === 'west') x -= i * stepDepth;
 
-                const step = new THREE.Mesh(
-                    new THREE.BoxGeometry(stepSize, stepHeight, stepSize),
-                    material
-                );
-
-                step.position.set(
-                    x + side.x * stepSize,
-                    y + i * stepHeight + stepHeight / 2, // Center the step vertically
-                    z + side.z * stepSize
-                );
-
-                scene.add(step);
-                // DON'T add to colliders - let player walk through stairs
-                // colliders.push(step);
+                // Create the step
+                wall(x, y, z, stepWidth, stepHeight, stepDepth);
             }
         }
 
-        // Spiral stairs around the main tower - visual only, no collision
-        squareTowerSteps(0, 0, -90, 60, 1, 6);
-
-        // Create invisible ramp platforms that elevate the player
-        function createStairPlatform(x, y, z, width, depth) {
-            const platform = new THREE.Mesh(
-                new THREE.BoxGeometry(width, 0.1, depth),
-                new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 })
-            );
-            platform.position.set(x, y, z);
-            scene.add(platform);
-            colliders.push(platform);
-        }
-
-        // Create platforms at each step height for the spiral stairs
-        // Each platform is at the position of 4 steps to create a gradual climb
-        for (let i = 0; i < 15; i++) {
-            const height = i * 4; // Every 4 units of height
-            createStairPlatform(6, height + 0.05, -90, 8, 8);    // East
-            createStairPlatform(0, height + 1 + 0.05, -84, 8, 8); // South
-            createStairPlatform(-6, height + 2 + 0.05, -90, 8, 8); // West
-            createStairPlatform(0, height + 3 + 0.05, -96, 8, 8);  // North
-        }
+        // Create stairs leading up to the main tower
+        createStairs(0, 0.5, -75, 'north', 20);  // 20 steps going north toward tower
 
         /* =====================
            MOAT (ring around castle walls)
