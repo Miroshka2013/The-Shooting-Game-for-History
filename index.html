@@ -84,6 +84,26 @@
 
     <div id="hint">Click to lock mouse • WASD to move • Space to jump • E to shoot • ⚠️ MOAT = DEATH</div>
 
+    <div id="health"
+        style="position: fixed; top: 50px; left: 10px; color: white; font-family: sans-serif; background: rgba(0, 0, 0, 0.5); padding: 6px 10px; z-index: 10; font-size: 18px;">
+        ❤️ Health: <span id="healthValue">100</span>
+    </div>
+
+    <div id="deathMessage"
+        style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: red; font-family: sans-serif; font-size: 72px; font-weight: bold; z-index: 100; display: none; text-shadow: 4px 4px 8px black;">
+        YOU DIED
+    </div>
+
+    <div id="winMessage"
+        style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: gold; font-family: sans-serif; font-size: 72px; font-weight: bold; z-index: 100; display: none; text-shadow: 4px 4px 8px black;">
+        YOU WON!
+    </div>
+
+    <div id="killCounter"
+        style="position: fixed; top: 90px; left: 10px; color: white; font-family: sans-serif; background: rgba(0, 0, 0, 0.5); padding: 6px 10px; z-index: 10; font-size: 18px;">
+        💀 Kills: <span id="killCount">0</span> / 15
+    </div>
+
     <div id="joystick-base">
         <div id="joystick-knob"></div>
     </div>
@@ -154,7 +174,7 @@
         function house(x, y, z, w, h, d) {
             const m = new THREE.Mesh(
                 new THREE.BoxGeometry(w, h, d),
-                new THREE.MeshStandardMaterial({ color: 0x555555 })
+                new THREE.MeshStandardMaterial({ color: 0x5D4037 })
             );
             m.position.set(x, y, z);
             scene.add(m);
@@ -272,6 +292,61 @@
             colliders.push(m);
         }
 
+
+        function squarePyramid(x, y, z, size, height, color = 0xff0000) {
+            // Visual pyramid
+            const geometry = new THREE.ConeGeometry(size, height, 4);
+            const material = new THREE.MeshStandardMaterial({ color });
+            const pyramid = new THREE.Mesh(geometry, material);
+
+            pyramid.position.set(x, y + height / 2, z);
+            pyramid.rotation.y = Math.PI / 4;
+            scene.add(pyramid);
+
+            // 🔒 Invisible solid blocker
+            const blocker = new THREE.Mesh(
+                new THREE.BoxGeometry(size * 1.1, height, size * 1.1),
+                new THREE.MeshBasicMaterial({ visible: false })
+            );
+
+            blocker.position.copy(pyramid.position);
+            scene.add(blocker);
+
+            // Make it collide
+            colliders.push(blocker);
+
+            return pyramid;
+        }
+
+        function dirt(x, y, z, w, h, d) {
+            const dirt = new THREE.Mesh(
+                new THREE.BoxGeometry(w, h, d),
+                new THREE.MeshStandardMaterial({ color: 0x5D4037 })
+            );
+            dirt.position.set(x, y, z);
+            scene.add(dirt);
+            colliders.push(dirt);
+        }
+
+        function barley(x, y, z, w, h, d) {
+            const barley = new THREE.Mesh(
+                new THREE.BoxGeometry(w, h, d),
+                new THREE.MeshStandardMaterial({ color: 0x3a9d23 })
+            );
+            barley.position.set(x, y, z);
+            scene.add(barley);
+            colliders.push(barley);
+        }
+
+        function door(x, y, z, w, h, d) {
+            const door = new THREE.Mesh(
+                new THREE.BoxGeometry(w, h, d),
+                new THREE.MeshStandardMaterial({ color: 0xC4A484 })
+            );
+            door.position.set(x, y, z);
+            scene.add(door);
+        }
+
         // trunk
 
         trunk(0, 0, 50, 2, 7, 2);
@@ -351,6 +426,77 @@
         grass(100, 0, 80, 50, 5, 40);
         grass(120, 0, 120, 50, 5, 40);
         grass(100, 0, -120, 50, 5, 40);
+
+        //house walls
+
+        house(22, 0, -30, 15, 10, 1);
+        house(22, 0, -40, 15, 10, 1);
+        house(29, 0, -35, 1, 10, 10);
+        house(15, 0, -33, 1, 10, 7);
+
+        house(-23, 0, -30, 15, 10, 1);
+        house(-23, 0, -40, 15, 10, 1);
+        house(-30, 0, -35, 1, 10, 10);
+        house(-16, 0, -33, 1, 10, 7);
+
+        house(-23, 0, -70, 15, 10, 1);
+        house(-23, 0, -80, 15, 10, 1);
+        house(-30, 0, -75, 1, 10, 10);
+        house(-16, 0, -73, 1, 10, 7);
+
+        house(22, 0, -70, 15, 10, 1);
+        house(22, 0, -80, 15, 10, 1);
+        house(29, 0, -75, 1, 10, 10);
+        house(15, 0, -73, 1, 10, 7);
+
+        //house roofs
+
+        squarePyramid(22, 5, -35, 12, 15, 0xD2B44C);
+        squarePyramid(-23, 5, -35, 12, 15, 0xD2B44C);
+        squarePyramid(-23, 5, -75, 12, 15, 0xD2B44C);
+        squarePyramid(22, 5, -75, 12, 15, 0xD2B44C);
+
+        // dirt=farms
+
+        dirt(22, 0, -45, 15, 1, 5);
+        dirt(-23, 0, -45, 15, 1, 5);
+        dirt(-23, 0, -85, 15, 1, 5);
+        dirt(22, 0, -85, 15, 1, 5);
+
+        // barley
+
+        barley(22, 0, -45, 2, 2, 2);
+        barley(26, 0, -45, 2, 2, 2);
+        barley(18, 0, -45, 2, 2, 2);
+
+        barley(22, 0, -85, 2, 2, 2);
+        barley(26, 0, -85, 2, 2, 2);
+        barley(18, 0, -85, 2, 2, 2);
+
+        barley(-23, 0, -85, 2, 2, 2);
+        barley(-27, 0, -85, 2, 2, 2);
+        barley(-19, 0, -85, 2, 2, 2);
+
+        barley(-23, 0, -45, 2, 2, 2);
+        barley(-27, 0, -45, 2, 2, 2);
+        barley(-19, 0, -45, 2, 2, 2);
+
+        // doors for houses
+
+        door(15, 0, -78, 1, 10, 3);
+        door(-16, 0, -78, 1, 10, 3);
+        door(-16, 0, -38, 1, 10, 3);
+        door(15, 0, -38, 1, 10, 3);
+
+        //doors for towers
+
+        door(-22, 0, -97.5, 1, 10, 7);
+        door(22, 0, -97.5, 1, 10, 7);
+        door(-22, 0, -53.5, 1, 10, 7.5);
+        door(22, 0, -53.5, 1, 10, 7.5);
+        door(-22, 0, -14, 1, 10, 7.5);
+        door(22, 0, -14, 1, 10, 7.5);
+
 
         /* ---- STAIRS ---- */
         // Spiral stairs inside the main tower
@@ -564,13 +710,25 @@
            PLAYER
         ===================== */
         const player = {
-            position: new THREE.Vector3(0, 1.6, 5),
-            yaw: 0,
+            position: new THREE.Vector3(0, 1.6, 30),  // Outside castle, facing north to view castle
+            yaw: 0,  // Facing north towards castle
             pitch: 0
         };
         camera.position.copy(player.position);
 
         const playerSize = new THREE.Vector3(0.8, 1.8, 0.8);
+
+        /* Player Health */
+        let playerHealth = 100;
+        const maxHealth = 100;
+        const healthDisplay = document.getElementById('healthValue');
+        const deathMessage = document.getElementById('deathMessage');
+        const winMessage = document.getElementById('winMessage');
+        const killCountDisplay = document.getElementById('killCount');
+
+        /* Kill tracking */
+        let totalKills = 0;
+        const maxEnemies = 15;
 
         /* Jump & Swimming */
         let velocityY = 0;
@@ -722,9 +880,104 @@
         });
 
         /* =====================
+           ENEMY
+        ===================== */
+        const enemies = [];
+
+        function createEnemy(x, y, z) {
+            // Enemy body
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(0.8, 1.8, 0.8),
+                new THREE.MeshStandardMaterial({ color: 0xff0000 }) // Red enemy
+            );
+            body.position.set(x, y, z);
+            scene.add(body);
+
+            // Enemy head
+            const head = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 16, 16),
+                new THREE.MeshStandardMaterial({ color: 0xff4444 })
+            );
+            head.position.set(x, y + 1.2, z);
+            scene.add(head);
+
+            const enemy = {
+                body: body,
+                head: head,
+                position: new THREE.Vector3(x, y, z),
+                health: 100,
+                canShoot: true,
+                lastShot: 0,
+                speed: 0.05,
+                alive: true
+            };
+
+            enemies.push(enemy);
+            return enemy;
+        }
+
+        // Enemy spawn positions inside the castle (15 positions for 15 enemies)
+        const enemySpawnPositions = [
+            { x: 15, y: 1.6, z: -20 },    // Right front tower
+            { x: -15, y: 1.6, z: -20 },   // Left front tower
+            { x: 10, y: 1.6, z: -60 },    // Middle right
+            { x: -10, y: 1.6, z: -60 },   // Middle left
+            { x: 0, y: 1.6, z: -70 },     // Center
+            { x: 20, y: 1.6, z: -35 },    // Right house area
+            { x: -20, y: 1.6, z: -35 },   // Left house area
+            { x: 20, y: 1.6, z: -75 },    // Right back house
+            { x: -20, y: 1.6, z: -75 },   // Left back house
+            { x: 5, y: 1.6, z: -45 },     // Center middle
+            { x: -5, y: 1.6, z: -45 },    // Center middle left
+            { x: 0, y: 1.6, z: -30 },     // Front center
+            { x: 0, y: 1.6, z: -90 },     // Near main tower
+            { x: 25, y: 1.6, z: -95 },    // Right back tower
+            { x: -25, y: 1.6, z: -95 }    // Left back tower
+        ];
+
+        // Create initial 15 enemies
+        enemySpawnPositions.forEach(pos => {
+            createEnemy(pos.x, pos.y, pos.z);
+        });
+
+        // Function to reset the game
+        function resetGame() {
+            // Clear all existing enemies
+            enemies.forEach(enemy => {
+                if (enemy.body) scene.remove(enemy.body);
+                if (enemy.head) scene.remove(enemy.head);
+            });
+            enemies.length = 0;
+
+            // Clear all bullets
+            bullets.forEach(b => scene.remove(b));
+            bullets.length = 0;
+            enemyBullets.forEach(b => scene.remove(b));
+            enemyBullets.length = 0;
+
+            // Reset kill counter
+            totalKills = 0;
+            killCountDisplay.textContent = totalKills;
+
+            // Reset player
+            playerHealth = maxHealth;
+            healthDisplay.textContent = playerHealth;
+            healthDisplay.style.color = 'white';
+            player.position.set(0, 1.6, 30);
+            player.yaw = 0;
+            velocityY = 0;
+
+            // Spawn 15 new enemies
+            enemySpawnPositions.forEach(pos => {
+                createEnemy(pos.x, pos.y, pos.z);
+            });
+        }
+
+        /* =====================
            SHOOTING
         ===================== */
         const bullets = [];
+        const enemyBullets = [];
         let canShoot = true;
 
         function shoot() {
@@ -738,9 +991,39 @@
             const dir = new THREE.Vector3();
             camera.getWorldDirection(dir);
             b.velocity = dir.multiplyScalar(0.8);
+            b.isPlayerBullet = true;
             bullets.push(b);
             scene.add(b);
             setTimeout(() => canShoot = true, 200);
+        }
+
+        function enemyShoot(enemy) {
+            if (!enemy.canShoot || !enemy.alive) return;
+            enemy.canShoot = false;
+
+            const b = new THREE.Mesh(
+                new THREE.SphereGeometry(0.2, 16, 16),
+                new THREE.MeshStandardMaterial({ color: 0xff0000 }) // Red enemy bullets
+            );
+
+            // Set bullet starting position at enemy chest height
+            const bulletStart = enemy.position.clone();
+            bulletStart.y += 1.0;
+            b.position.copy(bulletStart);
+
+            // Calculate direction from bullet position to player center
+            const playerCenter = player.position.clone();
+            playerCenter.y += 0.9; // Aim at player center (half of player height)
+
+            const dir = new THREE.Vector3();
+            dir.subVectors(playerCenter, bulletStart).normalize();
+            b.velocity = dir.multiplyScalar(0.5);
+            b.isPlayerBullet = false;
+
+            enemyBullets.push(b);
+            scene.add(b);
+
+            setTimeout(() => enemy.canShoot = true, 2000); // Enemy shoots every 2 seconds
         }
 
         shootBtn.onclick = shoot;
@@ -897,16 +1180,169 @@
 
             // Drown - sink to bottom and reset
             if (isDrowning && player.position.y < -5) {
-                // Reset player to spawn
-                player.position.set(0, 1.6, 5);
-                velocityY = 0;
-                timeInWater = 0;
-                isDrowning = false;
-                isInWater = false;
-                onGround = true;
+                // Show death message
+                deathMessage.style.display = 'block';
+
+                setTimeout(() => {
+                    deathMessage.style.display = 'none';
+                    // Reset player to spawn outside castle (starting position)
+                    player.position.set(0, 1.6, 30);
+                    player.yaw = 0;
+                    velocityY = 0;
+                    timeInWater = 0;
+                    isDrowning = false;
+                    isInWater = false;
+                    onGround = true;
+                    // Reset health on death by drowning
+                    playerHealth = maxHealth;
+                    healthDisplay.textContent = playerHealth;
+                    healthDisplay.style.color = 'white';
+                }, 2000); // Show "YOU DIED" for 2 seconds
             }
 
-            bullets.forEach(b => b.position.add(b.velocity));
+            // Enemy AI
+            enemies.forEach(enemy => {
+                if (!enemy.alive) return;
+
+                // Move towards player
+                const distanceToPlayer = enemy.position.distanceTo(player.position);
+
+                if (distanceToPlayer > 3 && distanceToPlayer < 50) {
+                    // Move towards player
+                    const direction = new THREE.Vector3();
+                    direction.subVectors(player.position, enemy.position).normalize();
+
+                    const nextPos = enemy.position.clone();
+                    nextPos.x += direction.x * enemy.speed;
+                    nextPos.z += direction.z * enemy.speed;
+
+                    // Enhanced collision check for enemies
+                    const enemySize = new THREE.Vector3(0.8, 1.8, 0.8);
+                    const enemyBox = new THREE.Box3().setFromCenterAndSize(
+                        new THREE.Vector3(nextPos.x, nextPos.y + 0.9, nextPos.z),
+                        enemySize
+                    );
+
+                    let canMove = true;
+
+                    // Check collision with all walls and obstacles
+                    for (let collider of colliders) {
+                        const colliderBox = new THREE.Box3().setFromObject(collider);
+                        if (enemyBox.intersectsBox(colliderBox)) {
+                            canMove = false;
+                            break;
+                        }
+                    }
+
+                    // Don't move into moat
+                    if (isOverMoat(nextPos.x, nextPos.z)) {
+                        canMove = false;
+                    }
+
+                    if (canMove) {
+                        enemy.position.copy(nextPos);
+                        enemy.body.position.copy(nextPos);
+                        enemy.head.position.set(nextPos.x, nextPos.y + 1.2, nextPos.z);
+                    }
+                }
+
+                // Shoot at player
+                if (distanceToPlayer < 30) {
+                    enemyShoot(enemy);
+                }
+            });
+
+            // Update player bullets
+            bullets.forEach((b, index) => {
+                b.position.add(b.velocity);
+
+                // Check collision with enemies
+                enemies.forEach((enemy, enemyIndex) => {
+                    if (!enemy.alive) return;
+
+                    const dist = b.position.distanceTo(enemy.position);
+                    if (dist < 1.0) {
+                        enemy.health -= 34; // 3 shots to kill
+
+                        if (enemy.health <= 0) {
+                            enemy.alive = false;
+                            scene.remove(enemy.body);
+                            scene.remove(enemy.head);
+
+                            // Increment kill counter
+                            totalKills++;
+                            killCountDisplay.textContent = totalKills;
+
+                            // Check if all enemies are killed
+                            if (totalKills >= maxEnemies) {
+                                // Show win message
+                                winMessage.style.display = 'block';
+
+                                setTimeout(() => {
+                                    winMessage.style.display = 'none';
+                                    // Reset the game
+                                    resetGame();
+                                }, 3000); // Show "YOU WON!" for 3 seconds
+                            }
+                        }
+
+                        scene.remove(b);
+                        bullets.splice(index, 1);
+                    }
+                });
+
+                // Remove bullets that are too far
+                if (b.position.length() > 200) {
+                    scene.remove(b);
+                    bullets.splice(index, 1);
+                }
+            });
+
+            // Update enemy bullets
+            enemyBullets.forEach((b, index) => {
+                b.position.add(b.velocity);
+
+                // Check collision with player
+                const dist = b.position.distanceTo(player.position);
+                if (dist < 1.0) {
+                    // Player hit - take damage
+                    playerHealth -= 20; // Each hit does 20 damage
+                    healthDisplay.textContent = playerHealth;
+
+                    // Update health display color
+                    if (playerHealth <= 30) {
+                        healthDisplay.style.color = 'red';
+                    } else if (playerHealth <= 60) {
+                        healthDisplay.style.color = 'orange';
+                    }
+
+                    scene.remove(b);
+                    enemyBullets.splice(index, 1);
+
+                    // Check if player is dead
+                    if (playerHealth <= 0) {
+                        // Show death message
+                        deathMessage.style.display = 'block';
+
+                        setTimeout(() => {
+                            deathMessage.style.display = 'none';
+                            // Player dies - respawn with full health at starting position
+                            playerHealth = maxHealth;
+                            healthDisplay.textContent = playerHealth;
+                            healthDisplay.style.color = 'white';
+                            player.position.set(0, 1.6, 30); // Starting position outside castle
+                            player.yaw = 0; // Reset camera to face castle
+                            velocityY = 0;
+                        }, 2000); // Show "YOU DIED" for 2 seconds
+                    }
+                }
+
+                // Remove bullets that are too far
+                if (b.position.length() > 200) {
+                    scene.remove(b);
+                    enemyBullets.splice(index, 1);
+                }
+            });
 
             camera.rotation.order = "YXZ";
             camera.rotation.y = player.yaw;
@@ -916,6 +1352,7 @@
             renderer.render(scene, camera);
         }
         animate();
+
 
         addEventListener("resize", () => {
             camera.aspect = innerWidth / innerHeight;
