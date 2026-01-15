@@ -77,10 +77,73 @@
             border: 4px solid rgba(255, 255, 255, 1);
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
         }
+
+        /* START MENU */
+        #startMenu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            font-family: 'Georgia', serif;
+        }
+
+        #startMenu h1 {
+            color: #f4d03f;
+            font-size: 64px;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+        }
+
+        #startMenu p {
+            color: #ddd;
+            font-size: 20px;
+            margin-bottom: 50px;
+            text-align: center;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        .menu-button {
+            padding: 20px 50px;
+            margin: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 3px solid #f4d03f;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(244, 208, 63, 0.5);
+        }
+
+        .menu-button.explore {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
     </style>
 </head>
 
 <body>
+
+    <!-- START MENU -->
+    <div id="startMenu">
+        <h1>⚔️ The Castle Adventure ⚔️</h1>
+        <p>Welcome, brave warrior! Choose your path:</p>
+        <button class="menu-button" id="startGameBtn">🎯 Start Game (Fight Enemies)</button>
+        <button class="menu-button explore" id="exploreCastleBtn">🏰 Explore Castle (Peaceful)</button>
+    </div>
 
     <div id="hint">Click to lock mouse • WASD to move • Space to jump • E to shoot • ⚠️ MOAT = DEATH</div>
 
@@ -121,6 +184,33 @@
 
     <script type="module">
         import * as THREE from 'three';
+
+        /* =====================
+           GAME MODE SELECTION
+        ===================== */
+        let gameMode = null; // 'battle' or 'explore'
+        let gameStarted = false;
+
+        const startMenu = document.getElementById('startMenu');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const exploreCastleBtn = document.getElementById('exploreCastleBtn');
+
+        startGameBtn.addEventListener('click', () => {
+            gameMode = 'battle';
+            startMenu.style.display = 'none';
+            gameStarted = true;
+            document.body.requestPointerLock();
+        });
+
+        exploreCastleBtn.addEventListener('click', () => {
+            gameMode = 'explore';
+            startMenu.style.display = 'none';
+            gameStarted = true;
+            // Hide game UI elements for explore mode
+            document.getElementById('killCounter').style.display = 'none';
+            document.getElementById('hint').textContent = 'Click to lock mouse • WASD to move • Space to jump • Explore the castle!';
+            document.body.requestPointerLock();
+        });
 
         /* =====================
            SETUP
@@ -500,16 +590,17 @@
 
         /* ---- STAIRS ---- */
         // Spiral stairs inside the main tower
-        function createSpiralStairs(centerX, centerZ, startY, endY, radius, stepsPerLoop) {
+        function createSpiralStairs(centerX, centerZ, startY, endY, radius, stepsPerLoop, startAngle = 0) {
             const totalHeight = endY - startY;
             const stepHeight = 0.3;
             const totalSteps = Math.floor(totalHeight / stepHeight);
             const angleStep = (Math.PI * 2) / stepsPerLoop;
             const stepWidth = 3;
             const stepDepth = 2;
+            const railingHeight = 1.5; // Taller railing
 
             for (let i = 0; i < totalSteps; i++) {
-                const angle = i * angleStep;
+                const angle = startAngle + (i * angleStep);
                 const x = centerX + Math.cos(angle) * radius;
                 const z = centerZ + Math.sin(angle) * radius;
                 const y = startY + (i * stepHeight);
@@ -523,12 +614,59 @@
                 m.rotation.y = angle + Math.PI / 2; // Rotate to face center
                 scene.add(m);
                 colliders.push(m);
+
+                // Create outer railing wall (solid barrier along outer edge)
+                const outerRailingDistance = radius + stepWidth / 2;
+                const railingX = centerX + Math.cos(angle) * outerRailingDistance;
+                const railingZ = centerZ + Math.sin(angle) * outerRailingDistance;
+
+                // Solid railing barrier
+                const railing = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.3, railingHeight, stepDepth),
+                    new THREE.MeshStandardMaterial({ color: 0x654321, roughness: 0.8 })
+                );
+                railing.position.set(railingX, y + railingHeight / 2, railingZ);
+                railing.rotation.y = angle + Math.PI / 2;
+                scene.add(railing);
+                colliders.push(railing);
+
+                // Add horizontal rail bars for better look
+                if (i % 2 === 0) { // Every other step
+                    // Top rail
+                    const topRail = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.15, 0.1, stepDepth * 1.2),
+                        new THREE.MeshStandardMaterial({ color: 0x8B4513 })
+                    );
+                    topRail.position.set(railingX, y + railingHeight - 0.1, railingZ);
+                    topRail.rotation.y = angle + Math.PI / 2;
+                    scene.add(topRail);
+                }
             }
         }
 
         // Create spiral stairs inside the main tower
         // Tower center is at (0, y, -90), radius is about 6 units (inside the 20x20 tower)
-        createSpiralStairs(0, -90, 0, 50, 6, 20); // 20 steps per complete loop
+        createSpiralStairs(0, -90, 0, 50, 6, 20, Math.PI); // Start from south (door side)
+
+        // Create spiral stairs inside the six towers
+        // Stairs start from door positions:
+        // Front right tower: door at (22, 0, -14), center at (28.5, -, -17.5)
+        createSpiralStairs(28.5, -17.5, 0, 20, 3.5, 16, Math.atan2(-14 - (-17.5), 22 - 28.5)); 
+        
+        // Front left tower: door at (-22, 0, -14), center at (-28.5, -, -17.5)
+        createSpiralStairs(-28.5, -17.5, 0, 20, 3.5, 16, Math.atan2(-14 - (-17.5), -22 - (-28.5))); 
+        
+        // Middle right tower: door at (22, 0, -53.5), center at (28.5, -, -57.5)
+        createSpiralStairs(28.5, -57.5, 0, 20, 3.5, 16, Math.atan2(-53.5 - (-57.5), 22 - 28.5)); 
+        
+        // Middle left tower: door at (-22, 0, -53.5), center at (-28.5, -, -57.5)
+        createSpiralStairs(-28.5, -57.5, 0, 20, 3.5, 16, Math.atan2(-53.5 - (-57.5), -22 - (-28.5))); 
+        
+        // Back right tower: door at (22, 0, -97.5), center at (28.5, -, -101.5)
+        createSpiralStairs(28.5, -101.5, 0, 20, 3.5, 16, Math.atan2(-97.5 - (-101.5), 22 - 28.5)); 
+        
+        // Back left tower: door at (-22, 0, -97.5), center at (-28.5, -, -101.5)
+        createSpiralStairs(-28.5, -101.5, 0, 20, 3.5, 16, Math.atan2(-97.5 - (-101.5), -22 - (-28.5)));
 
         /* =====================
            MOAT (ring around castle walls)
@@ -935,10 +1073,15 @@
             { x: -25, y: 1.6, z: -95 }    // Left back tower
         ];
 
-        // Create initial 15 enemies
-        enemySpawnPositions.forEach(pos => {
-            createEnemy(pos.x, pos.y, pos.z);
-        });
+        // Create initial 15 enemies ONLY IN BATTLE MODE
+        // This will be called after game mode is selected
+        function initializeEnemies() {
+            if (gameMode === 'battle') {
+                enemySpawnPositions.forEach(pos => {
+                    createEnemy(pos.x, pos.y, pos.z);
+                });
+            }
+        }
 
         // Function to reset the game
         function resetGame() {
@@ -1060,8 +1203,16 @@
            GAME LOOP
         ===================== */
         const speed = 0.15;
+        let enemiesInitialized = false;
+
         function animate() {
             requestAnimationFrame(animate);
+
+            // Initialize enemies once game starts in battle mode
+            if (gameStarted && !enemiesInitialized && gameMode === 'battle') {
+                initializeEnemies();
+                enemiesInitialized = true;
+            }
 
             // Check distance to gate and open/close
             const distanceToGate = Math.sqrt(
@@ -1200,149 +1351,153 @@
                 }, 2000); // Show "YOU DIED" for 2 seconds
             }
 
-            // Enemy AI
-            enemies.forEach(enemy => {
-                if (!enemy.alive) return;
-
-                // Move towards player
-                const distanceToPlayer = enemy.position.distanceTo(player.position);
-
-                if (distanceToPlayer > 3 && distanceToPlayer < 50) {
-                    // Move towards player
-                    const direction = new THREE.Vector3();
-                    direction.subVectors(player.position, enemy.position).normalize();
-
-                    const nextPos = enemy.position.clone();
-                    nextPos.x += direction.x * enemy.speed;
-                    nextPos.z += direction.z * enemy.speed;
-
-                    // Enhanced collision check for enemies
-                    const enemySize = new THREE.Vector3(0.8, 1.8, 0.8);
-                    const enemyBox = new THREE.Box3().setFromCenterAndSize(
-                        new THREE.Vector3(nextPos.x, nextPos.y + 0.9, nextPos.z),
-                        enemySize
-                    );
-
-                    let canMove = true;
-
-                    // Check collision with all walls and obstacles
-                    for (let collider of colliders) {
-                        const colliderBox = new THREE.Box3().setFromObject(collider);
-                        if (enemyBox.intersectsBox(colliderBox)) {
-                            canMove = false;
-                            break;
-                        }
-                    }
-
-                    // Don't move into moat
-                    if (isOverMoat(nextPos.x, nextPos.z)) {
-                        canMove = false;
-                    }
-
-                    if (canMove) {
-                        enemy.position.copy(nextPos);
-                        enemy.body.position.copy(nextPos);
-                        enemy.head.position.set(nextPos.x, nextPos.y + 1.2, nextPos.z);
-                    }
-                }
-
-                // Shoot at player
-                if (distanceToPlayer < 30) {
-                    enemyShoot(enemy);
-                }
-            });
-
-            // Update player bullets
-            bullets.forEach((b, index) => {
-                b.position.add(b.velocity);
-
-                // Check collision with enemies
-                enemies.forEach((enemy, enemyIndex) => {
+            // Enemy AI - ONLY IN BATTLE MODE
+            if (gameMode === 'battle') {
+                enemies.forEach(enemy => {
                     if (!enemy.alive) return;
 
-                    const dist = b.position.distanceTo(enemy.position);
-                    if (dist < 1.0) {
-                        enemy.health -= 34; // 3 shots to kill
+                    // Move towards player
+                    const distanceToPlayer = enemy.position.distanceTo(player.position);
 
-                        if (enemy.health <= 0) {
-                            enemy.alive = false;
-                            scene.remove(enemy.body);
-                            scene.remove(enemy.head);
+                    if (distanceToPlayer > 3 && distanceToPlayer < 50) {
+                        // Move towards player
+                        const direction = new THREE.Vector3();
+                        direction.subVectors(player.position, enemy.position).normalize();
 
-                            // Increment kill counter
-                            totalKills++;
-                            killCountDisplay.textContent = totalKills;
+                        const nextPos = enemy.position.clone();
+                        nextPos.x += direction.x * enemy.speed;
+                        nextPos.z += direction.z * enemy.speed;
 
-                            // Check if all enemies are killed
-                            if (totalKills >= maxEnemies) {
-                                // Show win message
-                                winMessage.style.display = 'block';
+                        // Enhanced collision check for enemies
+                        const enemySize = new THREE.Vector3(0.8, 1.8, 0.8);
+                        const enemyBox = new THREE.Box3().setFromCenterAndSize(
+                            new THREE.Vector3(nextPos.x, nextPos.y + 0.9, nextPos.z),
+                            enemySize
+                        );
 
-                                setTimeout(() => {
-                                    winMessage.style.display = 'none';
-                                    // Reset the game
-                                    resetGame();
-                                }, 3000); // Show "YOU WON!" for 3 seconds
+                        let canMove = true;
+
+                        // Check collision with all walls and obstacles
+                        for (let collider of colliders) {
+                            const colliderBox = new THREE.Box3().setFromObject(collider);
+                            if (enemyBox.intersectsBox(colliderBox)) {
+                                canMove = false;
+                                break;
                             }
                         }
 
+                        // Don't move into moat
+                        if (isOverMoat(nextPos.x, nextPos.z)) {
+                            canMove = false;
+                        }
+
+                        if (canMove) {
+                            enemy.position.copy(nextPos);
+                            enemy.body.position.copy(nextPos);
+                            enemy.head.position.set(nextPos.x, nextPos.y + 1.2, nextPos.z);
+                        }
+                    }
+
+                    // Shoot at player
+                    if (distanceToPlayer < 30) {
+                        enemyShoot(enemy);
+                    }
+                });
+            }
+
+            // Update player bullets - ONLY IN BATTLE MODE
+            if (gameMode === 'battle') {
+                bullets.forEach((b, index) => {
+                    b.position.add(b.velocity);
+
+                    // Check collision with enemies
+                    enemies.forEach((enemy, enemyIndex) => {
+                        if (!enemy.alive) return;
+
+                        const dist = b.position.distanceTo(enemy.position);
+                        if (dist < 1.0) {
+                            enemy.health -= 34; // 3 shots to kill
+
+                            if (enemy.health <= 0) {
+                                enemy.alive = false;
+                                scene.remove(enemy.body);
+                                scene.remove(enemy.head);
+
+                                // Increment kill counter
+                                totalKills++;
+                                killCountDisplay.textContent = totalKills;
+
+                                // Check if all enemies are killed
+                                if (totalKills >= maxEnemies) {
+                                    // Show win message
+                                    winMessage.style.display = 'block';
+
+                                    setTimeout(() => {
+                                        winMessage.style.display = 'none';
+                                        // Reset the game
+                                        resetGame();
+                                    }, 3000); // Show "YOU WON!" for 3 seconds
+                                }
+                            }
+
+                            scene.remove(b);
+                            bullets.splice(index, 1);
+                        }
+                    });
+
+                    // Remove bullets that are too far
+                    if (b.position.length() > 200) {
                         scene.remove(b);
                         bullets.splice(index, 1);
                     }
                 });
 
-                // Remove bullets that are too far
-                if (b.position.length() > 200) {
-                    scene.remove(b);
-                    bullets.splice(index, 1);
-                }
-            });
+                // Update enemy bullets
+                enemyBullets.forEach((b, index) => {
+                    b.position.add(b.velocity);
 
-            // Update enemy bullets
-            enemyBullets.forEach((b, index) => {
-                b.position.add(b.velocity);
+                    // Check collision with player
+                    const dist = b.position.distanceTo(player.position);
+                    if (dist < 1.0) {
+                        // Player hit - take damage
+                        playerHealth -= 20; // Each hit does 20 damage
+                        healthDisplay.textContent = playerHealth;
 
-                // Check collision with player
-                const dist = b.position.distanceTo(player.position);
-                if (dist < 1.0) {
-                    // Player hit - take damage
-                    playerHealth -= 20; // Each hit does 20 damage
-                    healthDisplay.textContent = playerHealth;
+                        // Update health display color
+                        if (playerHealth <= 30) {
+                            healthDisplay.style.color = 'red';
+                        } else if (playerHealth <= 60) {
+                            healthDisplay.style.color = 'orange';
+                        }
 
-                    // Update health display color
-                    if (playerHealth <= 30) {
-                        healthDisplay.style.color = 'red';
-                    } else if (playerHealth <= 60) {
-                        healthDisplay.style.color = 'orange';
+                        scene.remove(b);
+                        enemyBullets.splice(index, 1);
+
+                        // Check if player is dead
+                        if (playerHealth <= 0) {
+                            // Show death message
+                            deathMessage.style.display = 'block';
+
+                            setTimeout(() => {
+                                deathMessage.style.display = 'none';
+                                // Player dies - respawn with full health at starting position
+                                playerHealth = maxHealth;
+                                healthDisplay.textContent = playerHealth;
+                                healthDisplay.style.color = 'white';
+                                player.position.set(0, 1.6, 30); // Starting position outside castle
+                                player.yaw = 0; // Reset camera to face castle
+                                velocityY = 0;
+                            }, 2000); // Show "YOU DIED" for 2 seconds
+                        }
                     }
 
-                    scene.remove(b);
-                    enemyBullets.splice(index, 1);
-
-                    // Check if player is dead
-                    if (playerHealth <= 0) {
-                        // Show death message
-                        deathMessage.style.display = 'block';
-
-                        setTimeout(() => {
-                            deathMessage.style.display = 'none';
-                            // Player dies - respawn with full health at starting position
-                            playerHealth = maxHealth;
-                            healthDisplay.textContent = playerHealth;
-                            healthDisplay.style.color = 'white';
-                            player.position.set(0, 1.6, 30); // Starting position outside castle
-                            player.yaw = 0; // Reset camera to face castle
-                            velocityY = 0;
-                        }, 2000); // Show "YOU DIED" for 2 seconds
+                    // Remove bullets that are too far
+                    if (b.position.length() > 200) {
+                        scene.remove(b);
+                        enemyBullets.splice(index, 1);
                     }
-                }
-
-                // Remove bullets that are too far
-                if (b.position.length() > 200) {
-                    scene.remove(b);
-                    enemyBullets.splice(index, 1);
-                }
-            });
+                });
+            } // End of battle mode check
 
             camera.rotation.order = "YXZ";
             camera.rotation.y = player.yaw;
