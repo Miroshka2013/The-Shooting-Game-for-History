@@ -1,0 +1,75 @@
+THE SHOOTING GAME FOR HISTORY - USER INSTRUCTIONS
+
+WELCOME
+This is a 3D castle exploration and battle game set in a medieval environment.
+Choose your adventure: fight enemies or peacefully explore the castle.
+
+GETTING STARTED
+1. Open the game in your web browser
+2. Select a game mode from the start menu:
+   - Start Game (Fight Enemies) - Battle mode with 15 enemies to defeat
+   - Explore Castle (Peaceful) - Free exploration without combat
+
+CONTROLS
+
+Desktop/Laptop:
+Click anywhere to lock mouse cursor
+W, A, S, D keys - Move forward, left, backward, right
+Mouse - Look around and aim
+SPACEBAR - Jump
+E key - Shoot (battle mode only)
+
+Mobile/Tablet:
+Joystick (bottom left) - Move character
+Swipe on screen - Look around and aim
+Jump button (top right) - Jump
+Shoot button (bottom right) - Shoot (battle mode only)
+
+GAME MODES
+
+Battle Mode:
+Defeat all 15 enemies inside the castle
+Each enemy takes 3 shots to kill
+Enemies shoot back and deal 20 damage per hit
+You have 100 health points
+Kill counter shows your progress (0/15)
+Win by defeating all enemies
+Respawn at castle entrance if you die
+
+Explore Mode:
+Peacefully walk around the castle
+No enemies or combat
+Explore all 7 towers with spiral staircases
+Walk across the drawbridge
+Visit the houses and farms
+
+MAP FEATURES
+Main Central Tower - Tallest structure with spiral stairs to the top
+6 Side Towers - Each has its own spiral staircase
+Houses - 4 houses with doors you can enter
+Farms - Barley fields near the houses
+Moat - Water surrounding the castle (causes death if you fall in)
+Drawbridge - Opens automatically when you approach
+Gate - Opens when you get close to the entrance
+
+IMPORTANT WARNINGS
+MOAT = DEATH - Stay on the bridge when crossing the moat
+If you fall in the moat, you will drown after 3 seconds
+Enemies respawn when you die in battle mode
+Health displays in top left corner
+
+TIPS
+Use the spiral stairs to climb towers and get better vantage points
+In battle mode, keep moving to avoid enemy fire
+The gate opens automatically when you get close
+You can climb small steps automatically while walking
+Watch your health bar - it turns orange at 60HP, red at 30HP
+In explore mode, take time to visit all the towers and houses
+
+TROUBLESHOOTING
+If controls don't work, click on the game window to activate pointer lock
+If you get stuck, try jumping
+If stuck in moat, wait to respawn at entrance
+If enemies don't spawn, refresh and select Battle Mode again
+
+Enjoy your adventure!
